@@ -1,6 +1,6 @@
 ﻿namespace summeringsmakker.Models;
 
-public class DBDocument 
+public class Case 
 {
     public string Id { get; set; }
     public byte[] Content { get; set; }

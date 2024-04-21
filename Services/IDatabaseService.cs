@@ -1,12 +1,11 @@
 ﻿using summeringsmakker.Models;
-using DBDocument = summeringsmakker.Models.DBDocument;
 
 namespace summeringsmakker.Services;
 
 public interface IDatabaseService
 {
-    Task<DBDocument> GetFile(string id);
-    Task SaveFile(DBDocument file);
+    Task<Case> GetFile(string id);
+    Task SaveFile(Case file);
 
-    Task<List<DBDocument>> GetFilesFromPeriod(DateTime startDate, DateTime endDate);
+    Task<List<Case>> GetFilesFromPeriod(DateTime startDate, DateTime endDate);
 }

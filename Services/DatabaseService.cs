@@ -1,20 +1,20 @@
-﻿using DBDocument = summeringsmakker.Models.DBDocument;
+﻿using summeringsmakker.Models;
 
 namespace summeringsmakker.Services;
 
 public class DatabaseService : IDatabaseService
 {
-    public Task<DBDocument> GetFile(string id)
+    public Task<Case> GetFile(string id)
     {
         throw new NotImplementedException();
     }
 
-    public Task SaveFile(DBDocument file)
+    public Task SaveFile(Case file)
     {
         throw new NotImplementedException();
     }
 
-    public Task<List<DBDocument>> GetFilesFromPeriod(DateTime startDate, DateTime endDate)
+    public Task<List<Case>> GetFilesFromPeriod(DateTime startDate, DateTime endDate)
     {
         throw new NotImplementedException();
     }
