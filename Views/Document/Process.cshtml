@@ -1,0 +1,32 @@
+﻿@model summeringsmakker.Models.TextProcessed
+
+<h2>Document Analysis Results</h2>
+
+<script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: true });
+</script>
+
+<div>
+    <h3>Summary</h3>
+    <p>@Model.Summary</p>
+
+    <h3>Word Frequencies</h3>
+    <p>@Model.WordFrequencies</p>
+
+    <h3>Mermaid Diagram</h3>
+    <div class="mermaid">
+        @{
+            var mermaidDiagram = Model.MermaidDiagram.Replace("```mermaid", "").Trim(); 
+        }
+        @Html.Raw(mermaidDiagram + "]")
+    </div>
+
+    <h3>Legal References</h3>
+    <ul>
+        @foreach (var reference in Model.LegalReferences)
+        {
+            <li>@reference</li>
+        }
+    </ul>
+</div>

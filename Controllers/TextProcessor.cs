@@ -1,0 +1,222 @@
+﻿namespace summeringsmakker.Controllers
+{
+    using Newtonsoft.Json;
+    using System.Collections.Generic;
+    using System.IO;
+    using iText.Kernel.Pdf;
+    using iText.Kernel.Pdf.Canvas.Parser;
+    using iText.Kernel.Pdf.Canvas.Parser.Listener;
+    using System.Text.RegularExpressions;
+    using System.Text;
+    using summeringsmakker.Models;
+
+    public static class TextProcessor
+    {
+        private static readonly HttpClient httpClient = new HttpClient();
+        private static List<Message> messages = new List<Message>();
+
+        static TextProcessor()
+        {
+            var GPT4V_KEY = File.ReadAllText("EnvVariables/gpt4v_key").Trim();
+            //var GPT4V_KEY = Environment.GetEnvironmentVariable("GPT4V_KEY");
+            httpClient.DefaultRequestHeaders.Add("api-key", GPT4V_KEY);
+        }
+
+        private const string GPT4V_ENDPOINT = "https://ftfaopenaiswedentest.openai.azure.com/openai/deployments/FTFA-gpt-4-vision-preview/chat/completions?api-version=2023-07-01-preview";
+        private const double TEMPERATURE = 0.1;
+        private const double TOP_P = 0.95;
+        private const int MAX_TOKENS = 4096;
+
+        public static async Task<TextProcessed> ProcessFile(string filePath)
+        {
+            messages.Add(new Message { role = "system", content = "Du er en AI der scanner juridiske dokumenter og udtrækker de vigtigste dele og du svare på dansk" });
+            messages.Add(new Message { role = "user", content = "brug den juridiske metode når du analysere dokumenter" });
+
+            var viewModel = new TextProcessed();
+            string text;
+            if (File.Exists(filePath))
+            {
+                text = ExtractTextFromPdf(filePath);
+                await AnalyzeText(viewModel, text);
+            }
+
+            return viewModel;
+
+            /*
+            if (File.Exists(filePath))
+            {
+                string text = ExtractTextFromPdf(filePath);
+                await AnalyzeText(text);
+                return "Processing completed with text: " + text; 
+            }
+            else
+            {
+                return "File does not exist.";
+            }
+            */
+        }
+
+        private static string ExtractTextFromPdf(string path)
+        {
+            using (PdfReader reader = new PdfReader(path))
+            using (PdfDocument pdfDoc = new PdfDocument(reader))
+            {
+                StringBuilder text = new StringBuilder();
+
+                for (int i = 1; i <= pdfDoc.GetNumberOfPages(); i++)
+                {
+                    PdfPage page = pdfDoc.GetPage(i);
+                    ITextExtractionStrategy strategy = new SimpleTextExtractionStrategy();
+                    string pageText = PdfTextExtractor.GetTextFromPage(page, strategy);
+                    text.AppendLine(pageText);
+                }
+
+                return text.ToString();
+            }
+        }
+
+        private static async Task AnalyzeText(TextProcessed viewModel, string text)
+        {
+            await SendTextForSummary(viewModel, text);
+            await AnalyzeWordFrequency(viewModel, text);
+            await GenerateMermaidDiagram(viewModel, text);
+            await FindLegalReferences(viewModel, text);
+        }
+
+        private static async Task SendTextForSummary(TextProcessed viewModel, string text)
+        {
+            var payload = new
+            {
+                messages = new List<object>
+            {
+                new { role = "system", content = "Please summarize the following text." },
+                new { role = "user", content = text }
+            },
+                temperature = TEMPERATURE,
+                top_p = TOP_P,
+                max_tokens = 200,
+                stream = false
+            };
+
+            var response = await SendRequestToOpenAI(JsonConvert.SerializeObject(payload));
+            Console.WriteLine("Summary: " + response);
+            //viewModel.Summary = response;
+            dynamic responseObj = JsonConvert.DeserializeObject(response);
+            viewModel.Summary = (string)responseObj.choices[0].message.content;
+        }
+
+        private static async Task AnalyzeWordFrequency(TextProcessed viewModel, string text)
+        {
+            var payload = new
+            {
+                messages = new List<object>
+            {
+                new { role = "system", content = "Identify the 10 most important words and list the frequency of each of those words in the text." },
+                new { role = "user", content = text }
+            },
+                temperature = TEMPERATURE,
+                top_p = TOP_P,
+                max_tokens = 100,
+                stream = false
+            };
+            var response = await SendRequestToOpenAI(JsonConvert.SerializeObject(payload));
+            Console.WriteLine("Word Frequencies: ");
+            //viewModel.WordFrequencies = response;
+            dynamic responseObj = JsonConvert.DeserializeObject(response);
+            viewModel.WordFrequencies = (string)responseObj.choices[0].message.content;
+
+        }
+
+        private static async Task GenerateMermaidDiagram(TextProcessed viewModel, string text)
+        {
+            var payload = new
+            {
+                messages = new List<object>
+            {
+                new { role = "system", content = "Generate a Mermaid diagram from the flow in the following text." },
+                new { role = "user", content = text }
+            },
+                temperature = TEMPERATURE,
+                top_p = TOP_P,
+                max_tokens = 200,
+                stream = false
+            };
+
+            var response = await SendRequestToOpenAI(JsonConvert.SerializeObject(payload));
+            Console.WriteLine("Mermaid Diagram: " + response);
+            //viewModel.MermaidDiagram = response;
+            dynamic responseObj = JsonConvert.DeserializeObject(response);
+            viewModel.MermaidDiagram = (string)responseObj.choices[0].message.content;
+
+        }
+
+        private static async Task FindLegalReferences(TextProcessed viewModel, string text)
+        {
+            var payload = new
+            {
+                messages = new List<object>
+                {
+                    new { role = "system", content = "Identify and list all legal references in the text provided." },
+                    new { role = "user", content = text }
+                },
+                temperature = TEMPERATURE,
+                top_p = TOP_P,
+                max_tokens = 1000,
+                stream = false
+            };
+
+
+            var response = await SendRequestToOpenAI(JsonConvert.SerializeObject(payload));
+            Console.WriteLine("Legal References Found: " + response);
+            
+            dynamic responseObj = JsonConvert.DeserializeObject(response);
+            string legalReferences = (string)responseObj.choices[0].message.content;
+
+            if (!string.IsNullOrEmpty(legalReferences))
+            {
+                viewModel.LegalReferences = legalReferences.Split(',').Select(s => s.Trim()).ToList();
+            }
+
+            /*
+            List<string> legalReferences = new List<string>();
+            foreach (Match match in Regex.Matches(text, @"\b§\s*\d+\b"))
+            {
+                legalReferences.Add(match.Value);
+            }
+            viewModel.LegalReferences = legalReferences;
+            /*
+            var matches = Regex.Matches(text, @"\b§\s*\d+\b");
+            Console.WriteLine("Legal References Found:");
+            foreach (Match match in matches)
+            {
+                Console.WriteLine(match.Value);
+                viewModel.LegalReferences.Add(match.Value);
+            }
+            */
+        }
+
+        private static async Task<string> SendRequestToOpenAI(string jsonContent) //vi bør lige give den her et andet navn så vi ikke får ballade. tænker rename fra OpenAi --> AI
+        {
+            var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+            var response = await httpClient.PostAsync(GPT4V_ENDPOINT, content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadAsStringAsync();
+            }
+            else
+            {
+                Console.WriteLine($"Failed to send payload. Status code: {response.StatusCode}.");
+                return null;
+            }
+        }
+    }
+
+
+    class Message
+    {
+        public string role { get; set; } = string.Empty;
+        public string content { get; set; } = string.Empty;
+    }
+
+}
