@@ -116,14 +116,30 @@ public static class CaseProcessor
             },
             temperature = TEMPERATURE,
             top_p = TOP_P,
-            max_tokens = 100,
+            max_tokens = 200,
             stream = false
         };
         var response = await SendRequestToOpenAI(JsonConvert.SerializeObject(payload));
-        Console.WriteLine("Word Frequencies: ");
-        //viewModel.WordFrequencies = response;
+        Console.WriteLine("Word Frequencies: " + response);
         dynamic responseObj = JsonConvert.DeserializeObject(response);
-        viewModel.Words = responseObj.choices[0].message.content;
+        string wordFrequencies = responseObj.choices[0].message.content;
+
+        string[] lines = wordFrequencies.Split('\n');
+        viewModel.Words = viewModel.Words ?? new List<Word>();
+
+        foreach (string line in lines)
+        {
+            // Split each line into word and frequency
+            var parts = line.Split(new[] { " - " }, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 2)
+            {
+                string wordsPart = parts[0].Trim();
+                wordsPart = wordsPart.Substring(wordsPart.IndexOf('.') + 1).Trim(); // Remove the numbering.
+                int frequencyPart = int.Parse(parts[1].Trim());
+
+                viewModel.Words.Add(new Word { Words = wordsPart, Frequency = frequencyPart });
+            }
+        }
 
     }
 

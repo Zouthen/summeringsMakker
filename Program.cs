@@ -15,7 +15,7 @@ public class Program
         // Add DbContext to the services
         builder.Services.AddDbContext<CaseDbContext>(options =>
             options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
-
+        
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.

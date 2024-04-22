@@ -12,7 +12,12 @@
     <p>@Model.Summary</p>
 
     <h3>Word Frequencies</h3>
-    <p>@Model.Words</p>
+    <ul>
+        @foreach (var word in Model.Words)
+        {
+            <li>@word.Words - @word.Frequency times</li>
+        }
+    </ul>
 
     <h3>Mermaid Diagram</h3>
     <div class="mermaid">
