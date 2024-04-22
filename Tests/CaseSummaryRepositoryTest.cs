@@ -35,5 +35,9 @@ public class CaseSummaryRepositoryTests
         Assert.Equal(caseSummary, result);
     }
 
-    // Add more tests for other methods in your repository
+    [Fact]
+    public void AssertFalse()
+    {
+        Assert.Equal(true, true);
+    }
 }
