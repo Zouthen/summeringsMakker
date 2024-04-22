@@ -2,6 +2,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using summeringsmakker.DTOs;
 using System;
+using summeringsmakker.Models;
+using summeringsmakker.Repository;
+using summeringsMakker.Repository;
 
 namespace summeringsmakker.Controllers
 {
@@ -9,6 +12,15 @@ namespace summeringsmakker.Controllers
     public class CaseSummaryController : Controller
     {
         private readonly ILogger<CaseSummaryController> _logger;
+        private readonly ICaseRepository _caseRepository;
+        private readonly ICaseSummaryRepository _caseSummaryRepository;
+
+        public CaseSummaryController(ILogger<CaseSummaryController> logger, ICaseRepository caseRepository, ICaseSummaryRepository caseSummaryRepository)
+        {
+            _logger = logger;
+            _caseRepository = caseRepository;
+            _caseSummaryRepository = caseSummaryRepository;
+        }
 
         public CaseSummaryController(ILogger<CaseSummaryController> logger)
         {
@@ -23,21 +35,37 @@ namespace summeringsmakker.Controllers
         [HttpPost("create-case-summaries")]
         public IActionResult CreateCaseSummaries()
         {
-            // specify period to whole day
+            // specify fetch period to whole day
             DateTime startOfDay = DateTime.Today;
             DateTime endOfDay = startOfDay.AddDays(1).AddTicks(-1);
 
-            // get from datawarehouse id of all cases for today
+            // Fetch all cases for the current day from the data warehouse
+            var casesForPeriod = _caseRepository.GetCases(startOfDay, endOfDay);
 
+            // Extract the IDs of the fetched cases
+            var caseIdsForPeriod = casesForPeriod.Select(c => c.Id).ToList();
 
-            // dont include cases we already have
+            // Get the IDs of the case summaries that already exist
+            var existingCaseSummaryIds = _caseSummaryRepository.GetCaseSummariesIds(caseIdsForPeriod).ToHashSet();
 
-
+            // Filter out the cases that already have summaries
+            var casesWithoutSummaries = casesForPeriod
+                .Where(c => !existingCaseSummaryIds.Contains(c.Id))
+                .ToList();
+            
             // create summaries
+            var caseSummaries = new List<CaseSummary>();
+            
+            // casesWithoutSummaries.ForEach(
+            //     caseSummaries.Add();
+            // );
+            
 
-
-            // upload summaries to database
-
+            // upload summaries to our database
+            _caseSummaryRepository.Add(caseSummaries);
+            
+            
+            // give request response
 
 
 

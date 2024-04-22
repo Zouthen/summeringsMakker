@@ -1,10 +1,11 @@
 ﻿using summeringsmakker.Models;
 using summeringsmakker.Data;
 using System.Linq;
+using summeringsMakker.Repository;
 
 namespace summeringsmakker.Repository;
 
-public class CaseSummaryRepository
+public class CaseSummaryRepository : ICaseSummaryRepository
 {
     private readonly CaseDbContext _context;
 
@@ -43,5 +44,22 @@ public class CaseSummaryRepository
             _context.CaseSummaries.Remove(caseSummary);
             _context.SaveChanges();
         }
+    }
+
+    public HashSet<string> GetCaseSummariesIds(List<string> periodCaseIds)
+    {
+        HashSet<string> Ids = new HashSet<string>();
+        
+        periodCaseIds.ForEach(periodId =>
+        {
+            Ids.Add(periodId);
+        });
+
+        return Ids;
+    }
+
+    public void Add(List<CaseSummary> caseSummaries)
+    {
+        throw new NotImplementedException();
     }
 }
