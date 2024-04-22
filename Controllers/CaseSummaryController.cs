@@ -15,10 +15,10 @@ namespace summeringsmakker.Controllers
             _logger = logger;
         }
 
-        public IActionResult Index()
-        {
-            return View();
-        }
+        // public IActionResult Index()
+        // {
+        //     return View();
+        // }
         
         [HttpPost("create-case-summaries")]
         public IActionResult CreateCaseSummaries()

@@ -1,4 +1,4 @@
-﻿@model summeringsmakker.Models.TextProcessed
+﻿@model CaseSummary
 
 <h2>Document Analysis Results</h2>
 
@@ -12,12 +12,12 @@
     <p>@Model.Summary</p>
 
     <h3>Word Frequencies</h3>
-    <p>@Model.WordFrequencies</p>
+    <p>@Model.Words</p>
 
     <h3>Mermaid Diagram</h3>
     <div class="mermaid">
         @{
-            var mermaidDiagram = Model.MermaidDiagram.Replace("```mermaid", "").Trim(); 
+            var mermaidDiagram = Model.MermaidCode.Replace("```mermaid", "").Trim(); 
         }
         @Html.Raw(mermaidDiagram + "]")
     </div>
