@@ -54,9 +54,15 @@ namespace summeringsmakker.Controllers
                 .ToList();
             
             // create summaries
+            var caseSummaries = new List<CaseSummary>();
+            
+            // casesWithoutSummaries.ForEach(
+            //     caseSummaries.Add();
+            // );
             
 
             // upload summaries to our database
+            _caseSummaryRepository.Add(caseSummaries);
             
             
             // give request response

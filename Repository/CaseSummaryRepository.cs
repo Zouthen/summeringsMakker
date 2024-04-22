@@ -57,4 +57,9 @@ public class CaseSummaryRepository : ICaseSummaryRepository
 
         return Ids;
     }
+
+    public void Add(List<CaseSummary> caseSummaries)
+    {
+        throw new NotImplementedException();
+    }
 }
