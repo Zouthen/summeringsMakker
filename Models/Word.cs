@@ -2,6 +2,6 @@
 
 public class Word
 {
-    public string Word { get; set; }
+    public string Words { get; set; }
     public int Frequency { get; set; }
 }

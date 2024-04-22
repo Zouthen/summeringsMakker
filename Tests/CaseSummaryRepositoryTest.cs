@@ -22,7 +22,7 @@ public class CaseSummaryRepositoryTests
     {
         // Arrange
         var dbContext = GetInMemoryDbContext();
-        var caseSummary = new CaseSummary { Id = 1, Summary = "Test Case", mermaidCode = "code"};
+        var caseSummary = new CaseSummary { Id = 1, Summary = "Test Case", MermaidCode = "code"};
         dbContext.CaseSummaries.Add(caseSummary);
         dbContext.SaveChanges();
 

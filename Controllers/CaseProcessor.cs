@@ -9,13 +9,13 @@ using iText.Kernel.Pdf.Canvas.Parser.Listener;
 using System.Text.RegularExpressions;
 using System.Text;
 using summeringsmakker.Models;
-/*
-public static class TextProcessor
+
+public static class CaseProcessor
 {
     private static readonly HttpClient httpClient = new HttpClient();
     private static List<Message> messages = new List<Message>();
 
-    static TextProcessor()
+    static CaseProcessor()
     {
         var GPT4V_KEY = File.ReadAllText("EnvVariables/gpt4v_key").Trim();
         //var GPT4V_KEY = Environment.GetEnvironmentVariable("GPT4V_KEY");
@@ -27,12 +27,12 @@ public static class TextProcessor
     private const double TOP_P = 0.95;
     private const int MAX_TOKENS = 4096;
 
-    public static async Task<TextProcessed> ProcessFile(string filePath)
+    public static async Task<CaseSummary> ProcessFile(string filePath)
     {
         messages.Add(new Message { role = "system", content = "Du er en AI der scanner juridiske dokumenter og udtrækker de vigtigste dele og du svare på dansk" });
         messages.Add(new Message { role = "user", content = "brug den juridiske metode når du analysere dokumenter" });
 
-        var viewModel = new TextProcessed();
+        var viewModel = new CaseSummary();
         string text;
         if (File.Exists(filePath))
         {
@@ -54,7 +54,6 @@ public static class TextProcessor
             return "File does not exist.";
         }
         */
-/*
     }
 
     private static string ExtractTextFromPdf(string path)
@@ -76,7 +75,7 @@ public static class TextProcessor
         }
     }
 
-    private static async Task AnalyzeText(TextProcessed viewModel, string text)
+    private static async Task AnalyzeText(CaseSummary viewModel, string text)
     {
         await SendTextForSummary(viewModel, text);
         await AnalyzeWordFrequency(viewModel, text);
@@ -84,7 +83,7 @@ public static class TextProcessor
         await FindLegalReferences(viewModel, text);
     }
 
-    private static async Task SendTextForSummary(TextProcessed viewModel, string text)
+    private static async Task SendTextForSummary(CaseSummary viewModel, string text)
     {
         var payload = new
         {
@@ -106,7 +105,7 @@ public static class TextProcessor
         viewModel.Summary = (string)responseObj.choices[0].message.content;
     }
 
-    private static async Task AnalyzeWordFrequency(TextProcessed viewModel, string text)
+    private static async Task AnalyzeWordFrequency(CaseSummary viewModel, string text)
     {
         var payload = new
         {
@@ -124,11 +123,11 @@ public static class TextProcessor
         Console.WriteLine("Word Frequencies: ");
         //viewModel.WordFrequencies = response;
         dynamic responseObj = JsonConvert.DeserializeObject(response);
-        viewModel.WordFrequencies = (string)responseObj.choices[0].message.content;
+        viewModel.Words = responseObj.choices[0].message.content;
 
     }
 
-    private static async Task GenerateMermaidDiagram(TextProcessed viewModel, string text)
+    private static async Task GenerateMermaidDiagram(CaseSummary viewModel, string text)
     {
         var payload = new
         {
@@ -147,11 +146,11 @@ public static class TextProcessor
         Console.WriteLine("Mermaid Diagram: " + response);
         //viewModel.MermaidDiagram = response;
         dynamic responseObj = JsonConvert.DeserializeObject(response);
-        viewModel.MermaidDiagram = (string)responseObj.choices[0].message.content;
+        viewModel.MermaidCode = (string)responseObj.choices[0].message.content;
 
     }
 
-    private static async Task FindLegalReferences(TextProcessed viewModel, string text)
+    private static async Task FindLegalReferences(CaseSummary viewModel, string text)
     {
         var payload = new
         {
@@ -194,7 +193,6 @@ public static class TextProcessor
             viewModel.LegalReferences.Add(match.Value);
         }
         */
-/*
     }
 
     private static async Task<string> SendRequestToOpenAI(string jsonContent) //vi bør lige give den her et andet navn så vi ikke får ballade. tænker rename fra OpenAi --> AI
@@ -214,10 +212,9 @@ public static class TextProcessor
     }
 }
 
-/*
+
 class Message
 {
     public string role { get; set; } = string.Empty;
     public string content { get; set; } = string.Empty;
 }
-*/

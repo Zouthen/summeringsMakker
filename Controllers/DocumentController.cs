@@ -18,12 +18,14 @@ public class DocumentController : Controller
     */
     public async Task<IActionResult> Process()
     {
-            var viewModel = new TextProcessed();
-            string filePath = "afgørelse.pdf";
-            // assuming ProcessFile now returns a ViewModel instead of just a string
-            viewModel = await TextProcessor.ProcessFile(filePath);
+        //var viewModel = new TextProcessed();
+        var viewModelCase = new CaseSummary();
+        string filePath = "afgørelse.pdf";
+        // assuming ProcessFile now returns a ViewModel instead of just a string
+        //viewModel = await TextProcessor.ProcessFile(filePath);
+        viewModelCase = await CaseProcessor.ProcessFile(filePath);
 
-            // return the ViewModel to the view
-            return View(viewModel);
-        }
+        // return the ViewModel to the view
+        return View(viewModelCase);
+    }
 }

@@ -1,4 +1,4 @@
-﻿namespace summeringsmakker.Controllers;
+namespace summeringsmakker.Controllers;
 
 using Newtonsoft.Json;
 using System.Collections.Generic;
@@ -9,7 +9,7 @@ using iText.Kernel.Pdf.Canvas.Parser.Listener;
 using System.Text.RegularExpressions;
 using System.Text;
 using summeringsmakker.Models;
-/*
+
 public static class TextProcessor
 {
     private static readonly HttpClient httpClient = new HttpClient();
@@ -54,7 +54,6 @@ public static class TextProcessor
             return "File does not exist.";
         }
         */
-/*
     }
 
     private static string ExtractTextFromPdf(string path)
@@ -194,7 +193,6 @@ public static class TextProcessor
             viewModel.LegalReferences.Add(match.Value);
         }
         */
-/*
     }
 
     private static async Task<string> SendRequestToOpenAI(string jsonContent) //vi bør lige give den her et andet navn så vi ikke får ballade. tænker rename fra OpenAi --> AI
@@ -220,4 +218,3 @@ class Message
     public string role { get; set; } = string.Empty;
     public string content { get; set; } = string.Empty;
 }
-*/
