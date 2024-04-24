@@ -29,7 +29,7 @@ public class DocumentController : Controller
         // return the ViewModel to the view
         return View(viewModelCase);
     }
-
+    /*
     public async IActionResult save()
     {
     
@@ -46,4 +46,5 @@ public class DocumentController : Controller
         _caseSummaryRepository.Add(caseSummaries);
 
     }
+    */
 }

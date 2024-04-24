@@ -154,7 +154,7 @@ public static class CaseProcessor
             },
             temperature = TEMPERATURE,
             top_p = TOP_P,
-            max_tokens = 200,
+            max_tokens = 300,
             stream = false
         };
 
@@ -190,7 +190,8 @@ public static class CaseProcessor
 
         if (!string.IsNullOrEmpty(legalReferences))
         {
-            viewModel.LegalReferences = legalReferences.Split(',').Select(s => s.Trim()).ToList();
+            //viewModel.LegalReferences = legalReferences.Split(',').Select(s => s.Trim()).ToList();
+            viewModel.LegalReferences = legalReferences.Split('\n').Select(s => s.Trim()).ToList();
         }
 
         /*
