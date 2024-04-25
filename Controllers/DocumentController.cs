@@ -3,6 +3,7 @@
 using System;
 using Microsoft.AspNetCore.Mvc;
 using summeringsmakker.Models;
+using summeringsMakker.Services;
 
 public class DocumentController : Controller
 {
@@ -28,4 +29,22 @@ public class DocumentController : Controller
         // return the ViewModel to the view
         return View(viewModelCase);
     }
+    /*
+    public async IActionResult save()
+    {
+    
+
+        CaseSummary = new CaseSummary 
+        {
+            
+
+
+        }
+
+
+        // save i db case summary ord
+        _caseSummaryRepository.Add(caseSummaries);
+
+    }
+    */
 }

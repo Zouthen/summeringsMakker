@@ -1,4 +1,4 @@
-﻿namespace summeringsmakker.Controllers;
+﻿namespace summeringsMakker.Services;
 
 using Newtonsoft.Json;
 using System.Collections.Generic;
@@ -32,15 +32,15 @@ public static class CaseProcessor
         messages.Add(new Message { role = "system", content = "Du er en AI der scanner juridiske dokumenter og udtrækker de vigtigste dele og du svare på dansk" });
         messages.Add(new Message { role = "user", content = "brug den juridiske metode når du analysere dokumenter" });
 
-        var viewModel = new CaseSummary();
+        var caseSummary = new CaseSummary();
         string text;
         if (File.Exists(filePath))
         {
             text = ExtractTextFromPdf(filePath);
-            await AnalyzeText(viewModel, text);
+            await AnalyzeText(caseSummary, text);
         }
 
-        return viewModel;
+        return caseSummary;
 
         /*
         if (File.Exists(filePath))
@@ -100,7 +100,7 @@ public static class CaseProcessor
 
         var response = await SendRequestToOpenAI(JsonConvert.SerializeObject(payload));
         Console.WriteLine("Summary: " + response);
-        //viewModel.Summary = response;
+        //caseSummary.Summary = response;
         dynamic responseObj = JsonConvert.DeserializeObject(response);
         viewModel.Summary = (string)responseObj.choices[0].message.content;
     }
@@ -154,13 +154,13 @@ public static class CaseProcessor
             },
             temperature = TEMPERATURE,
             top_p = TOP_P,
-            max_tokens = 200,
+            max_tokens = 300,
             stream = false
         };
 
         var response = await SendRequestToOpenAI(JsonConvert.SerializeObject(payload));
         Console.WriteLine("Mermaid Diagram: " + response);
-        //viewModel.MermaidDiagram = response;
+        //caseSummary.MermaidDiagram = response;
         dynamic responseObj = JsonConvert.DeserializeObject(response);
         viewModel.MermaidCode = (string)responseObj.choices[0].message.content;
 
@@ -184,13 +184,14 @@ public static class CaseProcessor
 
         var response = await SendRequestToOpenAI(JsonConvert.SerializeObject(payload));
         Console.WriteLine("Legal References Found: " + response);
-            
+
         dynamic responseObj = JsonConvert.DeserializeObject(response);
         string legalReferences = (string)responseObj.choices[0].message.content;
 
         if (!string.IsNullOrEmpty(legalReferences))
         {
-            viewModel.LegalReferences = legalReferences.Split(',').Select(s => s.Trim()).ToList();
+            //viewModel.LegalReferences = legalReferences.Split(',').Select(s => s.Trim()).ToList();
+            viewModel.LegalReferences = legalReferences.Split('\n').Select(s => s.Trim()).ToList();
         }
 
         /*
@@ -199,14 +200,14 @@ public static class CaseProcessor
         {
             legalReferences.Add(match.Value);
         }
-        viewModel.LegalReferences = legalReferences;
+        caseSummary.LegalReferences = legalReferences;
         /*
         var matches = Regex.Matches(text, @"\b§\s*\d+\b");
         Console.WriteLine("Legal References Found:");
         foreach (Match match in matches)
         {
             Console.WriteLine(match.Value);
-            viewModel.LegalReferences.Add(match.Value);
+            caseSummary.LegalReferences.Add(match.Value);
         }
         */
     }

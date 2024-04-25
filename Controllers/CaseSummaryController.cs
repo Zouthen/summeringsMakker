@@ -4,6 +4,8 @@ using summeringsmakker.DTOs;
 using System;
 using summeringsmakker.Models;
 using summeringsMakker.Repository;
+using summeringsMakker.Services;
+
 
 namespace summeringsmakker.Controllers
 {
@@ -32,7 +34,7 @@ namespace summeringsmakker.Controllers
         // }
         
         [HttpPost("create-case-summaries")]
-        public async Task<IActionResult> CreateCaseSummaries()
+        public IActionResult CreateCaseSummaries()
         {
             // specify fetch period to whole day
             DateTime startOfDay = DateTime.Today;

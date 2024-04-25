@@ -20,11 +20,17 @@
     </ul>
 
     <h3>Mermaid Diagram</h3>
+    <p>@Model.MermaidCode</p>
     <div class="mermaid">
         @{
             var mermaidDiagram = Model.MermaidCode.Replace("```mermaid", "").Trim(); 
         }
         @Html.Raw(mermaidDiagram + "]")
+    </div>
+    <div class="mermaid">
+        @{
+            var mermaidDiagram2 = Model.MermaidCode.Replace("```mermaid", "").Trim();
+        }
     </div>
 
     <h3>Legal References</h3>
