@@ -83,5 +83,9 @@ namespace summeringsmakker.Controllers
             // return Ok($"Case summaries created from '{startDate}' to '{endDate}'");
             return Ok();
         }
+        
+        // get case summaries by word [liste af words]
+        
+        
     }
 }

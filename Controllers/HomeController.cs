@@ -34,4 +34,6 @@ public class HomeController : Controller
         var mySecret = Environment.GetEnvironmentVariable("MY_SECRET");
         return Content(mySecret);
     }
+    
+    
 }

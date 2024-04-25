@@ -8,5 +8,3 @@ public class CaseSummary
     public List<string> LegalReferences { get; set; }
     public List<Word> Words { get; set; }
 }
-
-

@@ -137,7 +137,7 @@ public static class CaseProcessor
                 wordsPart = wordsPart.Substring(wordsPart.IndexOf('.') + 1).Trim(); // Remove the numbering.
                 int frequencyPart = int.Parse(parts[1].Trim());
 
-                viewModel.Words.Add(new Word { Words = wordsPart, Frequency = frequencyPart });
+                viewModel.Words.Add(new Word { Text = wordsPart, Frequency = frequencyPart });
             }
         }
 
