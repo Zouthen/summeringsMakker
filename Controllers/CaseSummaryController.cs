@@ -3,7 +3,6 @@ using Microsoft.Extensions.Logging;
 using summeringsmakker.DTOs;
 using System;
 using summeringsmakker.Models;
-using summeringsmakker.Repository;
 using summeringsMakker.Repository;
 
 namespace summeringsmakker.Controllers
@@ -33,7 +32,7 @@ namespace summeringsmakker.Controllers
         // }
         
         [HttpPost("create-case-summaries")]
-        public IActionResult CreateCaseSummaries()
+        public async Task<IActionResult> CreateCaseSummaries()
         {
             // specify fetch period to whole day
             DateTime startOfDay = DateTime.Today;
@@ -55,25 +54,19 @@ namespace summeringsmakker.Controllers
             
             // create summaries
             var caseSummaries = new List<CaseSummary>();
-            
-            // casesWithoutSummaries.ForEach(
-            //     caseSummaries.Add();
-            // );
-            
+        
+            string filePath = "afgørelse.pdf"; // todo remove alter hardcoded path
+            foreach (var caseWithoutSummary in casesWithoutSummaries)
+            {
+                var caseSummary = await CaseProcessor.ProcessFile(filePath);
+                caseSummaries.Add(caseSummary);
+            }
 
-            // upload summaries to our database
+            // add to database
             _caseSummaryRepository.Add(caseSummaries);
-            
-            
+
             // give request response
-
-
-
-
-
-            // Handle the case where neither start nor end date is specified
-            // Return an error response or perform appropriate action
-            return BadRequest("Both start and end date are required.");
+            return Ok();
         }
         
         [HttpPost("create-case-summaries")]

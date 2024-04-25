@@ -1,21 +1,26 @@
 using Microsoft.EntityFrameworkCore;
 using summeringsmakker.Data;
+using DotNetEnv;
 
 namespace summeringsMakker;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
+        // Load environment variables from .env file
+        Env.Load("EnvVariables/.env");
+
         var builder = WebApplication.CreateBuilder(args);
 
         // Add services to the container.
         builder.Services.AddControllersWithViews();
-        
+
         // Add DbContext to the services
         builder.Services.AddDbContext<CaseDbContext>(options =>
-            options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
-        
+            options.UseSqlServer(Environment.GetEnvironmentVariable("CONNECT_STRING")));
+            // options.UseSqlServer("Server=localhost;Database=summeringsmakker;User Id=sa;Password=;"));
+
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.

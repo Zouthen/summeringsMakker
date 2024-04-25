@@ -365,5 +365,6 @@ FodyWeavers.xsd
 # Env variels (each env variable is a file)
 /EnvVariables/*
 !/EnvVariables/description.txt
+/.env
 
 *.pdf
