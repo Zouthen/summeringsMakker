@@ -13,9 +13,9 @@
 
     <h3>Word Frequencies</h3>
     <ul>
-        @foreach (var word in Model.Words)
+        @foreach (var caseSummaryWord in Model.CaseSummaryWords)
         {
-            <li>@word.Text - @word.Frequency times</li>
+        <li>@caseSummaryWord.Word.Text - @caseSummaryWord.Frequency times</li>
         }
     </ul>
 
@@ -35,9 +35,9 @@
 
     <h3>Legal References</h3>
     <ul>
-        @foreach (var reference in Model.LegalReferences)
+        @foreach (var legalReference in Model.GetLegalReferences())
         {
-            <li>@reference</li>
+        <li>@legalReference.Text</li>
         }
     </ul>
 </div>

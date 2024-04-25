@@ -4,7 +4,7 @@ using summeringsmakker.DTOs;
 using System;
 using summeringsmakker.Models;
 using summeringsMakker.Repository;
-using summeringsMakker.Services;
+// using summeringsMakker.Services;
 
 
 namespace summeringsmakker.Controllers
@@ -60,8 +60,8 @@ namespace summeringsmakker.Controllers
             string filePath = "afgørelse.pdf"; // todo remove alter hardcoded path
             foreach (var caseWithoutSummary in casesWithoutSummaries)
             {
-                var caseSummary = await CaseProcessor.ProcessFile(filePath);
-                caseSummaries.Add(caseSummary);
+                // var caseSummary = await CaseProcessor.ProcessFile(filePath);
+                // caseSummaries.Add(caseSummary);
             }
 
             // add to database

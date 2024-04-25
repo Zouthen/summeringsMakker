@@ -1,4 +1,6 @@
-﻿namespace summeringsmakker.Controllers;
+﻿using summeringsmakker.Repository;
+
+namespace summeringsmakker.Controllers;
 
 using System;
 using Microsoft.AspNetCore.Mvc;
@@ -7,18 +9,28 @@ using summeringsMakker.Services;
 
 public class DocumentController : Controller
 {
+    private readonly CaseProcessor _caseProcessor;
+    private readonly CaseSummaryRepository _caseSummaryRepository;
+
+    public DocumentController(CaseProcessor caseProcessor, CaseSummaryRepository caseSummaryRepository)
+    {
+        _caseProcessor = caseProcessor;
+        _caseSummaryRepository = caseSummaryRepository;
+    }
+
     public async Task<IActionResult> Process()
     {
-        //var viewModel = new TextProcessed();
         var viewModelCase = new CaseSummary();
         string filePath = "afgørelse.pdf";
-        // assuming ProcessFile now returns a ViewModel instead of just a string
-        //viewModel = await TextProcessor.ProcessFile(filePath);
-        viewModelCase = await CaseProcessor.ProcessFile(filePath);
+        viewModelCase = await _caseProcessor.ProcessFile(filePath);
 
-        // return the ViewModel to the view
+        _caseSummaryRepository.AddCaseSummary(viewModelCase);
+
+        var a = 10;
+
         return View(viewModelCase);
     }
+    
     /*
     public async IActionResult save()
     {

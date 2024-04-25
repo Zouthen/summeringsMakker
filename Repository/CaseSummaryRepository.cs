@@ -7,9 +7,9 @@ namespace summeringsmakker.Repository;
 
 public class CaseSummaryRepository : ICaseSummaryRepository
 {
-    private readonly CaseDbContext _context;
+    private readonly SummeringsMakkerDbContext _context;
 
-    public CaseSummaryRepository(CaseDbContext context)
+    public CaseSummaryRepository(SummeringsMakkerDbContext context)
     {
         _context = context;
     }
@@ -26,6 +26,31 @@ public class CaseSummaryRepository : ICaseSummaryRepository
 
     public void AddCaseSummary(CaseSummary caseSummary)
     {
+        _context.CaseSummaries.Add(caseSummary);
+        _context.SaveChanges();
+    }
+
+    public void AddCaseSummaryWithReferences(CaseSummary caseSummary)
+    {
+        foreach (var caseSummaryWord in caseSummary.CaseSummaryWords)
+        {
+            var word = _context.Words.FirstOrDefault(w => w.Text == caseSummaryWord.Word.Text);
+            if (word != null)
+            {
+                caseSummaryWord.Word = word;
+            }
+        }
+
+        foreach (var caseSummaryLegalReference in caseSummary.CaseSummaryLegalReferences)
+        {
+            var legalReference =
+                _context.LegalReferences.FirstOrDefault(lr => lr.Text == caseSummaryLegalReference.LegalReference.Text);
+            if (legalReference != null)
+            {
+                caseSummaryLegalReference.LegalReference = legalReference;
+            }
+        }
+
         _context.CaseSummaries.Add(caseSummary);
         _context.SaveChanges();
     }
@@ -49,11 +74,8 @@ public class CaseSummaryRepository : ICaseSummaryRepository
     public HashSet<string> GetCaseSummariesIds(List<string> periodCaseIds)
     {
         HashSet<string> Ids = new HashSet<string>();
-        
-        periodCaseIds.ForEach(periodId =>
-        {
-            Ids.Add(periodId);
-        });
+
+        periodCaseIds.ForEach(periodId => { Ids.Add(periodId); });
 
         return Ids;
     }

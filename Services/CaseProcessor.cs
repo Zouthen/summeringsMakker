@@ -1,4 +1,6 @@
-﻿namespace summeringsMakker.Services;
+﻿using summeringsmakker.Data;
+
+namespace summeringsMakker.Services;
 
 using Newtonsoft.Json;
 using System.Collections.Generic;
@@ -10,15 +12,17 @@ using System.Text.RegularExpressions;
 using System.Text;
 using summeringsmakker.Models;
 
-public static class CaseProcessor
+public  class CaseProcessor
 {
-    private static readonly HttpClient httpClient = new HttpClient();
-    private static List<Message> messages = new List<Message>();
+    private  readonly HttpClient httpClient = new HttpClient();
+    private List<Message> messages = new List<Message>();
+    private readonly SummeringsMakkerDbContext _context;
 
-    static CaseProcessor()
+    public CaseProcessor(SummeringsMakkerDbContext context)
     {
+        _context = context;
+        
         var GPT4V_KEY = File.ReadAllText("EnvVariables/gpt4v_key").Trim();
-        //var GPT4V_KEY = Environment.GetEnvironmentVariable("GPT4V_KEY");
         httpClient.DefaultRequestHeaders.Add("api-key", GPT4V_KEY);
     }
 
@@ -27,7 +31,7 @@ public static class CaseProcessor
     private const double TOP_P = 0.95;
     private const int MAX_TOKENS = 4096;
 
-    public static async Task<CaseSummary> ProcessFile(string filePath)
+    public  async Task<CaseSummary> ProcessFile(string filePath)
     {
         messages.Add(new Message { role = "system", content = "Du er en AI der scanner juridiske dokumenter og udtrækker de vigtigste dele og du svare på dansk" });
         messages.Add(new Message { role = "user", content = "brug den juridiske metode når du analysere dokumenter" });
@@ -56,7 +60,7 @@ public static class CaseProcessor
         */
     }
 
-    private static string ExtractTextFromPdf(string path)
+    private  string ExtractTextFromPdf(string path)
     {
         using (PdfReader reader = new PdfReader(path))
         using (PdfDocument pdfDoc = new PdfDocument(reader))
@@ -75,7 +79,7 @@ public static class CaseProcessor
         }
     }
 
-    private static async Task AnalyzeText(CaseSummary viewModel, string text)
+    private  async Task AnalyzeText(CaseSummary viewModel, string text)
     {
         await SendTextForSummary(viewModel, text);
         await AnalyzeWordFrequency(viewModel, text);
@@ -83,7 +87,7 @@ public static class CaseProcessor
         await FindLegalReferences(viewModel, text);
     }
 
-    private static async Task SendTextForSummary(CaseSummary viewModel, string text)
+    private  async Task SendTextForSummary(CaseSummary viewModel, string text)
     {
         var payload = new
         {
@@ -105,7 +109,7 @@ public static class CaseProcessor
         viewModel.Summary = (string)responseObj.choices[0].message.content;
     }
 
-    private static async Task AnalyzeWordFrequency(CaseSummary viewModel, string text)
+    private  async Task AnalyzeWordFrequency(CaseSummary viewModel, string text)
     {
         var payload = new
         {
@@ -125,7 +129,6 @@ public static class CaseProcessor
         string wordFrequencies = responseObj.choices[0].message.content;
 
         string[] lines = wordFrequencies.Split('\n');
-        viewModel.Words = viewModel.Words ?? new List<Word>();
 
         foreach (string line in lines)
         {
@@ -137,13 +140,16 @@ public static class CaseProcessor
                 wordsPart = wordsPart.Substring(wordsPart.IndexOf('.') + 1).Trim(); // Remove the numbering.
                 int frequencyPart = int.Parse(parts[1].Trim());
 
-                viewModel.Words.Add(new Word { Text = wordsPart, Frequency = frequencyPart });
+                var word = _context.Words.FirstOrDefault(w => w.Text == wordsPart) ?? new Word { Text = wordsPart };
+                var caseSummaryWord = new CaseSummaryWord { Word = word, CaseSummary = viewModel, Frequency = frequencyPart };
+
+                viewModel.CaseSummaryWords.Add(caseSummaryWord);
+                word.CaseSummaryWords.Add(caseSummaryWord);
             }
         }
-
     }
 
-    private static async Task GenerateMermaidDiagram(CaseSummary viewModel, string text)
+    private  async Task GenerateMermaidDiagram(CaseSummary viewModel, string text)
     {
         var payload = new
         {
@@ -163,10 +169,9 @@ public static class CaseProcessor
         //caseSummary.MermaidDiagram = response;
         dynamic responseObj = JsonConvert.DeserializeObject(response);
         viewModel.MermaidCode = (string)responseObj.choices[0].message.content;
-
     }
 
-    private static async Task FindLegalReferences(CaseSummary viewModel, string text)
+    private  async Task FindLegalReferences(CaseSummary viewModel, string text)
     {
         var payload = new
         {
@@ -190,8 +195,16 @@ public static class CaseProcessor
 
         if (!string.IsNullOrEmpty(legalReferences))
         {
-            //viewModel.LegalReferences = legalReferences.Split(',').Select(s => s.Trim()).ToList();
-            viewModel.LegalReferences = legalReferences.Split('\n').Select(s => s.Trim()).ToList();
+            var references = legalReferences.Split('\n').Select(s => s.Trim()).ToList();
+            foreach (var reference in references)
+            {
+                var legalReference = new LegalReference { Text = reference };
+                var caseSummaryLegalReference = new CaseSummaryLegalReference
+                    { LegalReference = legalReference, CaseSummary = viewModel };
+
+                viewModel.CaseSummaryLegalReferences.Add(caseSummaryLegalReference);
+                legalReference.CaseSummaryLegalReferences.Add(caseSummaryLegalReference);
+            }
         }
 
         /*
@@ -212,7 +225,9 @@ public static class CaseProcessor
         */
     }
 
-    private static async Task<string> SendRequestToOpenAI(string jsonContent) //vi bør lige give den her et andet navn så vi ikke får ballade. tænker rename fra OpenAi --> AI
+    private  async Task<string>
+        SendRequestToOpenAI(
+            string jsonContent) //vi bør lige give den her et andet navn så vi ikke får ballade. tænker rename fra OpenAi --> AI
     {
         var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
         var response = await httpClient.PostAsync(GPT4V_ENDPOINT, content);
@@ -228,7 +243,6 @@ public static class CaseProcessor
         }
     }
 }
-
 
 class Message
 {

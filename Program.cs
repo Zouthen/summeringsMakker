@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using summeringsmakker.Data;
 using DotNetEnv;
+using summeringsmakker.Repository;
+using summeringsMakker.Services;
 
 namespace summeringsMakker;
 
@@ -18,6 +20,10 @@ public class Program
 
         // Add DbContext to the services
         AddDatabaseContext(builder);
+        
+        // Register your services
+        builder.Services.AddScoped<CaseProcessor>();
+        builder.Services.AddScoped<CaseSummaryRepository>();
 
         var app = builder.Build();
 
@@ -46,7 +52,7 @@ public class Program
     // Add the database context to the services
     public static void AddDatabaseContext(WebApplicationBuilder builder)
     {
-        builder.Services.AddDbContext<CaseDbContext>(options =>
+        builder.Services.AddDbContext<SummeringsMakkerDbContext>(options =>
         {
             var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
             if (connectionString == null)
