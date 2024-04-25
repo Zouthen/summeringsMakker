@@ -34,7 +34,7 @@ namespace summeringsmakker.Controllers
         // }
         
         [HttpPost("create-case-summaries")]
-        public IActionResult CreateCaseSummaries()
+        public async Task<IActionResult> CreateCaseSummaries()
         {
             // specify fetch period to whole day
             DateTime startOfDay = DateTime.Today;
