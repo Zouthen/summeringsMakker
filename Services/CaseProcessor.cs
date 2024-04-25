@@ -94,7 +94,7 @@ public static class CaseProcessor
             },
             temperature = TEMPERATURE,
             top_p = TOP_P,
-            max_tokens = 200,
+            max_tokens = 800,
             stream = false
         };
 
@@ -154,7 +154,7 @@ public static class CaseProcessor
             },
             temperature = TEMPERATURE,
             top_p = TOP_P,
-            max_tokens = 300,
+            max_tokens = 1000,
             stream = false
         };
 
