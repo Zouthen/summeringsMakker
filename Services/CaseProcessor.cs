@@ -12,28 +12,34 @@ using System.Text.RegularExpressions;
 using System.Text;
 using summeringsmakker.Models;
 
-public  class CaseProcessor
+public class CaseProcessor
 {
-    private  readonly HttpClient httpClient = new HttpClient();
+    private readonly HttpClient httpClient = new HttpClient();
     private List<Message> messages = new List<Message>();
     private readonly SummeringsMakkerDbContext _context;
 
     public CaseProcessor(SummeringsMakkerDbContext context)
     {
         _context = context;
-        
+
         var GPT4V_KEY = File.ReadAllText("EnvVariables/gpt4v_key").Trim();
         httpClient.DefaultRequestHeaders.Add("api-key", GPT4V_KEY);
     }
 
-    private const string GPT4V_ENDPOINT = "https://ftfaopenaiswedentest.openai.azure.com/openai/deployments/FTFA-gpt-4-vision-preview/chat/completions?api-version=2023-07-01-preview";
+    private const string GPT4V_ENDPOINT =
+        "https://ftfaopenaiswedentest.openai.azure.com/openai/deployments/FTFA-gpt-4-vision-preview/chat/completions?api-version=2023-07-01-preview";
+
     private const double TEMPERATURE = 0.1;
     private const double TOP_P = 0.95;
     private const int MAX_TOKENS = 4096;
 
-    public  async Task<CaseSummary> ProcessFile(string filePath)
+    public async Task<CaseSummary> ProcessFile(string filePath)
     {
-        messages.Add(new Message { role = "system", content = "Du er en AI der scanner juridiske dokumenter og udtrækker de vigtigste dele og du svare på dansk" });
+        messages.Add(new Message
+        {
+            role = "system",
+            content = "Du er en AI der scanner juridiske dokumenter og udtrækker de vigtigste dele og du svare på dansk"
+        });
         messages.Add(new Message { role = "user", content = "brug den juridiske metode når du analysere dokumenter" });
 
         var caseSummary = new CaseSummary();
@@ -46,7 +52,7 @@ public  class CaseProcessor
 
         return caseSummary;
     }
-    
+
     private async Task<string> AnonymizeText(string text)
     {
         var payload = new
@@ -54,7 +60,12 @@ public  class CaseProcessor
             messages = new List<object>
             {
                 new { role = "system", content = "You are an AI that redacts personal information from text." },
-                new { role = "user", content = "Redact personal data from the provided text string using the following tokens: Replace names with {person}. Replace dates with {date}. Replace locations with {location}. Replace organization names with {organization}. Replace unique identifiers with {identifier}. Replace any other personal information tokens with {personal_info}. Replace descriptors for types of persons (e.g., 'plaintiff', 'defendant') with {person_type}. Ensure that the redacted text maintains readability and preserves the essential legal context of the document." }
+                new
+                {
+                    role = "user",
+                    content =
+                        "Redact personal data from the provided text string using the following tokens: Replace names with {person}. Replace dates with {date}. Replace locations with {location}. Replace organization names with {organization}. Replace unique identifiers with {identifier}. Replace any other personal information tokens with {personal_info}. Replace descriptors for types of persons (e.g., 'plaintiff', 'defendant') with {person_type}. Ensure that the redacted text maintains readability and preserves the essential legal context of the document."
+                }
             },
             temperature = TEMPERATURE,
             top_p = TOP_P,
@@ -69,7 +80,7 @@ public  class CaseProcessor
     }
 
 
-    private  string ExtractTextFromPdf(string path)
+    private string ExtractTextFromPdf(string path)
     {
         using (PdfReader reader = new PdfReader(path))
         using (PdfDocument pdfDoc = new PdfDocument(reader))
@@ -88,7 +99,7 @@ public  class CaseProcessor
         }
     }
 
-    private  async Task AnalyzeText(CaseSummary viewModel, string text)
+    private async Task AnalyzeText(CaseSummary viewModel, string text)
     {
         await SendTextForSummary(viewModel, text);
         await AnalyzeWordFrequency(viewModel, text);
@@ -96,7 +107,7 @@ public  class CaseProcessor
         await FindLegalReferences(viewModel, text);
     }
 
-    private  async Task SendTextForSummary(CaseSummary viewModel, string text)
+    private async Task SendTextForSummary(CaseSummary viewModel, string text)
     {
         var payload = new
         {
@@ -118,13 +129,18 @@ public  class CaseProcessor
         viewModel.Summary = (string)responseObj.choices[0].message.content;
     }
 
-    private  async Task AnalyzeWordFrequency(CaseSummary viewModel, string text)
+    private async Task AnalyzeWordFrequency(CaseSummary viewModel, string text)
     {
         var payload = new
         {
             messages = new List<object>
             {
-                new { role = "system", content = "Identify the 10 most important words and list the frequency of each of those words in the text." },
+                new
+                {
+                    role = "system",
+                    content =
+                        "Identify the 10 most important words and list the frequency of each of those words in the text."
+                },
                 new { role = "user", content = text }
             },
             temperature = TEMPERATURE,
@@ -150,7 +166,8 @@ public  class CaseProcessor
                 int frequencyPart = int.Parse(parts[1].Trim());
 
                 var word = _context.Words.FirstOrDefault(w => w.Text == wordsPart) ?? new Word { Text = wordsPart };
-                var caseSummaryWord = new CaseSummaryWord { Word = word, CaseSummary = viewModel, Frequency = frequencyPart };
+                var caseSummaryWord = new CaseSummaryWord
+                    { Word = word, CaseSummary = viewModel, Frequency = frequencyPart };
 
                 viewModel.CaseSummaryWords.Add(caseSummaryWord);
                 word.CaseSummaryWords.Add(caseSummaryWord);
@@ -158,7 +175,7 @@ public  class CaseProcessor
         }
     }
 
-    private  async Task GenerateMermaidDiagram(CaseSummary viewModel, string text)
+    private async Task GenerateMermaidDiagram(CaseSummary viewModel, string text)
     {
         var payload = new
         {
@@ -180,7 +197,7 @@ public  class CaseProcessor
         viewModel.MermaidCode = (string)responseObj.choices[0].message.content;
     }
 
-    private  async Task FindLegalReferences(CaseSummary viewModel, string text)
+    private async Task FindLegalReferences(CaseSummary viewModel, string text)
     {
         var payload = new
         {
@@ -215,28 +232,9 @@ public  class CaseProcessor
                 legalReference.CaseSummaryLegalReferences.Add(caseSummaryLegalReference);
             }
         }
-
-        /*
-        List<string> legalReferences = new List<string>();
-        foreach (Match match in Regex.Matches(text, @"\b§\s*\d+\b"))
-        {
-            legalReferences.Add(match.Value);
-        }
-        caseSummary.LegalReferences = legalReferences;
-        /*
-        var matches = Regex.Matches(text, @"\b§\s*\d+\b");
-        Console.WriteLine("Legal References Found:");
-        foreach (Match match in matches)
-        {
-            Console.WriteLine(match.Value);
-            caseSummary.LegalReferences.Add(match.Value);
-        }
-        */
     }
 
-    private  async Task<string>
-        SendRequestToOpenAI(
-            string jsonContent) //vi bør lige give den her et andet navn så vi ikke får ballade. tænker rename fra OpenAi --> AI
+    private async Task<string> SendRequestToOpenAI(string jsonContent) //vi bør lige give den her et andet navn så vi ikke får ballade. tænker rename fra OpenAi --> AI
     {
         var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
         var response = await httpClient.PostAsync(GPT4V_ENDPOINT, content);
