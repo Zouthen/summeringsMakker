@@ -362,9 +362,10 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 
-# Env variels (each env variable is a file)
+# Environment variables files
 /EnvVariables/*
 !/EnvVariables/description.txt
+!/EnvVariables/.env.template
 /.env
 
 *.pdf
