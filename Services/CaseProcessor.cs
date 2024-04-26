@@ -59,6 +59,28 @@ public  class CaseProcessor
         }
         */
     }
+    
+    private async Task<string> AnonymizeText(string text)
+    {
+        var payload = new
+        {
+            messages = new List<object>
+            {
+                new { role = "system", content = "You are an AI that redacts personal information from text." },
+                new { role = "user", content = "Redact personal data from the provided text string using the following tokens: Replace names with {person}. Replace dates with {date}. Replace locations with {location}. Replace organization names with {organization}. Replace unique identifiers with {identifier}. Replace any other personal information tokens with {personal_info}. Replace descriptors for types of persons (e.g., 'plaintiff', 'defendant') with {person_type}. Ensure that the redacted text maintains readability and preserves the essential legal context of the document." }
+            },
+            temperature = TEMPERATURE,
+            top_p = TOP_P,
+            max_tokens = MAX_TOKENS,
+            stream = false
+        };
+
+        var jsonContent = JsonConvert.SerializeObject(payload);
+        var response = await SendRequestToOpenAI(jsonContent);
+        dynamic responseObj = JsonConvert.DeserializeObject(response);
+        return responseObj.choices[0].message.content;
+    }
+
 
     private  string ExtractTextFromPdf(string path)
     {
