@@ -45,19 +45,6 @@ public  class CaseProcessor
         }
 
         return caseSummary;
-
-        /*
-        if (File.Exists(filePath))
-        {
-            string text = ExtractTextFromPdf(filePath);
-            await AnalyzeText(text);
-            return "Processing completed with text: " + text;
-        }
-        else
-        {
-            return "File does not exist.";
-        }
-        */
     }
     
     private async Task<string> AnonymizeText(string text)
