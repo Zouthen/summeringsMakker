@@ -23,13 +23,15 @@
     <p>@Model.MermaidCode</p>
     <div class="mermaid">
         @{
-            var mermaidDiagram = Model.MermaidCode.Replace("```mermaid", "").Trim(); 
+            var mermaidDiagram = Model.MermaidCode.Replace("```mermaid", "").Trim();
+            mermaidDiagram.Replace("```", "").Trim();
         }
         @Html.Raw(mermaidDiagram + "]")
     </div>
     <div class="mermaid">
         @{
             var mermaidDiagram2 = Model.MermaidCode.Replace("```mermaid", "").Trim();
+            mermaidDiagram2.Replace("```", "").Trim();
         }
     </div>
 

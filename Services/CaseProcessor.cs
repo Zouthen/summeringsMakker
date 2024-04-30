@@ -33,21 +33,17 @@ public class CaseProcessor
     private const double TOP_P = 0.95;
     private const int MAX_TOKENS = 4096;
 
+
     public async Task<CaseSummary> ProcessFile(string filePath)
     {
-        messages.Add(new Message
-        {
-            role = "system",
-            content = "Du er en AI der scanner juridiske dokumenter og udtrækker de vigtigste dele og du svare på dansk"
-        });
-        messages.Add(new Message { role = "user", content = "brug den juridiske metode når du analysere dokumenter" });
 
         var caseSummary = new CaseSummary();
         string text;
         if (File.Exists(filePath))
         {
             text = ExtractTextFromPdf(filePath);
-            await AnalyzeText(caseSummary, text);
+            string anonymizedText = await AnonymizeText(text);
+            await AnalyzeText(caseSummary, anonymizedText);
         }
 
         return caseSummary;
@@ -63,20 +59,21 @@ public class CaseProcessor
                 new
                 {
                     role = "user",
-                    content =
-                        "Redact personal data from the provided text string using the following tokens: Replace names with {person}. Replace dates with {date}. Replace locations with {location}. Replace organization names with {organization}. Replace unique identifiers with {identifier}. Replace any other personal information tokens with {personal_info}. Replace descriptors for types of persons (e.g., 'plaintiff', 'defendant') with {person_type}. Ensure that the redacted text maintains readability and preserves the essential legal context of the document."
-                }
+                    content ="Redact personal data from the provided text string using the following tokens: Replace names with {person}. Replace dates with {date}. Replace locations with {location}. Replace organization names with {organization}. Replace unique identifiers with {identifier}. Replace any other personal information tokens with {personal_info}. Replace descriptors for types of persons (e.g., 'plaintiff', 'defendant') with {person_type}. Ensure that the redacted text maintains readability and preserves the essential legal context of the document."
+
+                },
+                new { role = "user", content = text }
             },
             temperature = TEMPERATURE,
             top_p = TOP_P,
             max_tokens = MAX_TOKENS,
             stream = false
         };
-
-        var jsonContent = JsonConvert.SerializeObject(payload);
-        var response = await SendRequestToOpenAI(jsonContent);
+              
+        var response = await SendRequestToOpenAI(JsonConvert.SerializeObject(payload));
         dynamic responseObj = JsonConvert.DeserializeObject(response);
-        return responseObj.choices[0].message.content;
+        string textAnonymized = (string)responseObj.choices[0].message.content;
+        return textAnonymized;
     }
 
 
@@ -101,6 +98,13 @@ public class CaseProcessor
 
     private async Task AnalyzeText(CaseSummary viewModel, string text)
     {
+        messages.Add(new Message
+        {
+            role = "system",
+            content = "Du er en AI der scanner juridiske dokumenter og udtrækker de vigtigste dele og du svare på dansk"
+        });
+        messages.Add(new Message { role = "user", content = "brug den juridiske metode når du analysere dokumenter" });
+
         await SendTextForSummary(viewModel, text);
         await AnalyzeWordFrequency(viewModel, text);
         await GenerateMermaidDiagram(viewModel, text);
@@ -113,7 +117,7 @@ public class CaseProcessor
         {
             messages = new List<object>
             {
-                new { role = "system", content = "Please summarize the following text." },
+                new { role = "system", content = "lav et resume af den givne text på dansk" },
                 new { role = "user", content = text }
             },
             temperature = TEMPERATURE,
@@ -139,7 +143,7 @@ public class CaseProcessor
                 {
                     role = "system",
                     content =
-                        "Identify the 10 most important words and list the frequency of each of those words in the text."
+                        "identificer de 10 vigtigste ord i teksten og arranger dem efter deres hyppighed på følgende måde: ord - hyppighed."
                 },
                 new { role = "user", content = text }
             },
@@ -167,7 +171,7 @@ public class CaseProcessor
 
                 var word = _context.Words.FirstOrDefault(w => w.Text == wordsPart) ?? new Word { Text = wordsPart };
                 var caseSummaryWord = new CaseSummaryWord
-                    { Word = word, CaseSummary = viewModel, Frequency = frequencyPart };
+                { Word = word, CaseSummary = viewModel, Frequency = frequencyPart };
 
                 viewModel.CaseSummaryWords.Add(caseSummaryWord);
                 word.CaseSummaryWords.Add(caseSummaryWord);
@@ -226,7 +230,7 @@ public class CaseProcessor
             {
                 var legalReference = new LegalReference { Text = reference };
                 var caseSummaryLegalReference = new CaseSummaryLegalReference
-                    { LegalReference = legalReference, CaseSummary = viewModel };
+                { LegalReference = legalReference, CaseSummary = viewModel };
 
                 viewModel.CaseSummaryLegalReferences.Add(caseSummaryLegalReference);
                 legalReference.CaseSummaryLegalReferences.Add(caseSummaryLegalReference);
