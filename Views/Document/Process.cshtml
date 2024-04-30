@@ -1,5 +1,6 @@
 ﻿@model CaseSummary
 
+
 <h2>Document Analysis Results</h2>
 
 <script type="module">
@@ -15,31 +16,20 @@
     <ul>
         @foreach (var caseSummaryWord in Model.CaseSummaryWords)
         {
-        <li>@caseSummaryWord.Word.Text - @caseSummaryWord.Frequency times</li>
+            <li>@caseSummaryWord.Word.Text - @caseSummaryWord.Frequency times</li>
         }
     </ul>
 
     <h3>Mermaid Diagram</h3>
-    <p>@Model.MermaidCode</p>
     <div class="mermaid">
-        @{
-            var mermaidDiagram = Model.MermaidCode.Replace("```mermaid", "").Trim();
-            mermaidDiagram.Replace("```", "").Trim();
-        }
-        @Html.Raw(mermaidDiagram + "]")
-    </div>
-    <div class="mermaid">
-        @{
-            var mermaidDiagram2 = Model.MermaidCode.Replace("```mermaid", "").Trim();
-            mermaidDiagram2.Replace("```", "").Trim();
-        }
+        @Html.Raw(Model.MermaidCode)
     </div>
 
     <h3>Legal References</h3>
     <ul>
         @foreach (var legalReference in Model.GetLegalReferences())
         {
-        <li>@legalReference.Text</li>
+            <li>@legalReference.Text</li>
         }
     </ul>
 </div>

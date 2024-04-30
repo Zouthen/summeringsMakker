@@ -59,7 +59,8 @@ public class CaseProcessor
                 new
                 {
                     role = "user",
-                    content ="Redact personal data from the provided text string using the following tokens: Replace names with {person}. Replace dates with {date}. Replace locations with {location}. Replace organization names with {organization}. Replace unique identifiers with {identifier}. Replace any other personal information tokens with {personal_info}. Replace descriptors for types of persons (e.g., 'plaintiff', 'defendant') with {person_type}. Ensure that the redacted text maintains readability and preserves the essential legal context of the document."
+                    //content ="Redact personal data from the provided text string using the following tokens: Replace names with {person}. Replace dates with {date}. Replace locations with {location}. Replace organization names with {organization}. Replace unique identifiers with {identifier}. Replace any other personal information tokens with {personal_info}. Replace descriptors for types of persons (e.g., 'plaintiff', 'defendant') with {person_type}. Ensure that the redacted text maintains readability and preserves the essential legal context of the document."
+                    content ="Redact personal data from the provided text string using the following tokens: Replace names with 'person'. Replace dates with 'date'. Replace locations with 'location'. Replace organization names with 'organization'. Replace unique identifiers with 'identifier'. Replace any other personal information tokens with 'personal_info'. Replace descriptors for types of persons (e.g., 'plaintiff', 'defendant') with 'person_type'. Ensure that the redacted text maintains readability and preserves the essential legal context of the document."
 
                 },
                 new { role = "user", content = text }
@@ -198,7 +199,9 @@ public class CaseProcessor
         Console.WriteLine("Mermaid Diagram: " + response);
         //caseSummary.MermaidDiagram = response;
         dynamic responseObj = JsonConvert.DeserializeObject(response);
-        viewModel.MermaidCode = (string)responseObj.choices[0].message.content;
+        string mermaidTemp = (string)responseObj.choices[0].message.content;
+        string mermaidTemp2 = mermaidTemp.Replace("```mermaid", "").Replace("```", "").Replace("(EF)", "EF").Trim();
+        viewModel.MermaidCode = mermaidTemp2;
     }
 
     private async Task FindLegalReferences(CaseSummary viewModel, string text)
