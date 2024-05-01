@@ -10,6 +10,8 @@ using Microsoft.AspNetCore.Authorization;
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Reflection;
+using summeringsmakker.Models.DTO;
+
 // using summeringsMakker.Services;
 
 
@@ -23,7 +25,8 @@ namespace summeringsmakker.Controllers
         private readonly ICaseRepository _caseRepository;
         private readonly ICaseSummaryRepository _caseSummaryRepository;
 
-        public CaseSummaryController(ILogger<CaseSummaryController> logger, ICaseRepository caseRepository, ICaseSummaryRepository caseSummaryRepository)
+        public CaseSummaryController(ILogger<CaseSummaryController> logger, ICaseRepository caseRepository,
+            ICaseSummaryRepository caseSummaryRepository)
         {
             _logger = logger;
             _caseRepository = caseRepository;
@@ -39,7 +42,7 @@ namespace summeringsmakker.Controllers
         public IActionResult Index()
         {
             return View();
-            }
+        }
 
         [HttpPost]
         public async Task<ActionResult> LoadCases(CaseSummary caseSummary, CancellationToken cancellationToken)
@@ -58,7 +61,8 @@ namespace summeringsmakker.Controllers
                 int skip = start != null ? Convert.ToInt32(start) : 0;
                 int recordsTotal = 0;
 
-                var caseList = _caseSummaryRepository.GetCaseSummaries();
+                // var caseList = _caseSummaryRepository.GetCaseSummaries();
+                var caseList = _caseSummaryRepository.GetCaseSummaries2();
 
                 if (!string.IsNullOrEmpty(sortColumn) && !string.IsNullOrEmpty(sortColumnDir))
                 {
@@ -78,14 +82,27 @@ namespace summeringsmakker.Controllers
                     var normalizedSearchValue = SearchUtility.NormalizeString(searchValue);
 
                     caseList = caseList.Where(caseSummary =>
-                        SearchUtility.NormalizeString(caseSummary.CaseSummaryId.ToString()).Contains(normalizedSearchValue)
+                        SearchUtility.NormalizeString(caseSummary.CaseSummaryId.ToString())
+                            .Contains(normalizedSearchValue) ||
+                        caseSummary.GetWords().Any(word => SearchUtility.NormalizeString(word.Text).Contains(normalizedSearchValue))
                     ).ToList();
                 }
 
-                var data = caseList.Skip(skip).Take(pageSize).ToList();
-                recordsTotal = caseList.Count();
+                // Using DTO to avoid circular reference
+                var caseSummaryDtoList = caseList.Select(caseSummary => new CaseSummaryDTO
+                {
+                    CaseSummaryId = caseSummary.CaseSummaryId,
+                    Summary = caseSummary.Summary,
+                    MermaidCode = caseSummary.MermaidCode,
+                    CaseSummaryWords = caseSummary.GetWords().Select(word => word.Text).ToList(),
+                    CaseSummaryLegalReferences = caseSummary.GetLegalReferences().Select(legalReference => legalReference.Text).ToList()
+                }).ToList();
 
-                return Json(new { draw = draw, recordsFiltered = recordsTotal, recordsTotal = recordsTotal, data = data });
+                var data = caseSummaryDtoList.Skip(skip).Take(pageSize).ToList();
+                recordsTotal = caseSummaryDtoList.Count();
+
+                return Json(new
+                    { draw = draw, recordsFiltered = recordsTotal, recordsTotal = recordsTotal, data = data });
             }
             catch (Exception ex)
             {
@@ -113,10 +130,10 @@ namespace summeringsmakker.Controllers
             var casesWithoutSummaries = casesForPeriod
                 .Where(c => !existingCaseSummaryIds.Contains(c.Id))
                 .ToList();
-            
+
             // create summaries
             var caseSummaries = new List<CaseSummary>();
-        
+
             string filePath = "afgørelse.pdf"; // todo remove alter hardcoded path
             foreach (var caseWithoutSummary in casesWithoutSummaries)
             {
@@ -130,7 +147,7 @@ namespace summeringsmakker.Controllers
             // give request response
             return Ok();
         }
-        
+
         [HttpPost("create-case-summaries")]
         public IActionResult CreateCaseSummaries([FromBody] CaseSummariesRequest request)
         {
@@ -143,9 +160,7 @@ namespace summeringsmakker.Controllers
             // return Ok($"Case summaries created from '{startDate}' to '{endDate}'");
             return Ok();
         }
-        
+
         // get case summaries by word [liste af words]
-        
-        
     }
 }

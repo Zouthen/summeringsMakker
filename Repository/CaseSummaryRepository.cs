@@ -1,6 +1,7 @@
 ﻿using summeringsmakker.Models;
 using summeringsmakker.Data;
 using System.Linq;
+using Microsoft.EntityFrameworkCore;
 using summeringsMakker.Repository;
 
 namespace summeringsmakker.Repository;
@@ -22,6 +23,16 @@ public class CaseSummaryRepository : ICaseSummaryRepository
     public List<CaseSummary> GetCaseSummaries()
     {
         return _context.CaseSummaries.ToList();
+    }
+    
+    public List<CaseSummary> GetCaseSummaries2()
+    {
+        return _context.CaseSummaries
+            .Include(cs => cs.CaseSummaryWords)
+            .ThenInclude(csw => csw.Word)
+            .Include(cs => cs.CaseSummaryLegalReferences)
+            .ThenInclude(cslr => cslr.LegalReference)
+            .ToList();
     }
 
     public void AddCaseSummary(CaseSummary caseSummary)
