@@ -131,7 +131,8 @@ public class CaseProcessor
         Console.WriteLine("Summary: " + response);
         //caseSummary.Summary = response;
         dynamic responseObj = JsonConvert.DeserializeObject(response);
-        viewModel.Summary = (string)responseObj.choices[0].message.content;
+        string tempSummary = (string)responseObj.choices[0].message.content;
+        viewModel.Summary = tempSummary.Replace("Resume:", "").Trim();
     }
 
     private async Task AnalyzeWordFrequency(CaseSummary viewModel, string text)
@@ -166,7 +167,7 @@ public class CaseProcessor
             var parts = line.Split(new[] { " - " }, StringSplitOptions.RemoveEmptyEntries);
             if (parts.Length == 2)
             {
-                string wordsPart = parts[0].Trim();
+                string wordsPart = parts[0].Replace("-","").Trim();
                 wordsPart = wordsPart.Substring(wordsPart.IndexOf('.') + 1).Trim(); // Remove the numbering.
                 int frequencyPart = int.Parse(parts[1].Trim());
 
@@ -186,7 +187,7 @@ public class CaseProcessor
         {
             messages = new List<object>
             {
-                new { role = "system", content = "Generate a Mermaid diagram from the flow in the following text." },
+                new { role = "system", content = "Generate a sequence Mermaid diagram from the flow in the following text. Do not add reminders or other unnecessary text" },
                 new { role = "user", content = text }
             },
             temperature = TEMPERATURE,
@@ -200,8 +201,7 @@ public class CaseProcessor
         //caseSummary.MermaidDiagram = response;
         dynamic responseObj = JsonConvert.DeserializeObject(response);
         string mermaidTemp = (string)responseObj.choices[0].message.content;
-        string mermaidTemp2 = mermaidTemp.Replace("```mermaid", "").Replace("```", "").Replace("(EF)", "EF").Trim();
-        viewModel.MermaidCode = mermaidTemp2;
+        viewModel.MermaidCode = mermaidTemp.Replace("```mermaid", "").Replace("```", "").Replace("(EF)", "EF").Trim();
     }
 
     private async Task FindLegalReferences(CaseSummary viewModel, string text)
