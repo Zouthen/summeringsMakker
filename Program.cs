@@ -3,6 +3,8 @@ using summeringsmakker.Data;
 using DotNetEnv;
 using summeringsmakker.Repository;
 using summeringsMakker.Services;
+using summeringsmakker.Models;
+using summeringsMakker.Repository;
 
 namespace summeringsMakker;
 
@@ -20,10 +22,12 @@ public class Program
 
         // Add DbContext to the services
         AddDatabaseContext(builder);
-        
+
         // Register your services
         builder.Services.AddScoped<CaseProcessor>();
-        builder.Services.AddScoped<CaseSummaryRepository>();
+        builder.Services.AddScoped<ICaseRepository, CaseRepository>(); // Adjust CaseRepository to your actual implementation class
+        builder.Services.AddScoped<ICaseSummaryRepository, CaseSummaryRepository>(); // Also ensure you register interfaces, not concrete classes
+
 
         var app = builder.Build();
 
