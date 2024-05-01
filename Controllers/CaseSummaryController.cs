@@ -66,7 +66,7 @@ namespace summeringsmakker.Controllers
 
                     caseList = sortColumn switch
                     {
-                        "CaseSummaryId" => isDescending
+                        "Id" => isDescending
                             ? caseList.OrderByDescending(t => t.CaseSummaryId).ToList()
                             : caseList.OrderBy(t => t.CaseSummaryId).ToList(),
                         _ => caseList

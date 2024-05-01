@@ -5,14 +5,16 @@ namespace summeringsmakker.Controllers;
 using System;
 using Microsoft.AspNetCore.Mvc;
 using summeringsmakker.Models;
+using summeringsMakker.Repository;
 using summeringsMakker.Services;
 
 public class DocumentController : Controller
 {
     private readonly CaseProcessor _caseProcessor;
-    private readonly CaseSummaryRepository _caseSummaryRepository;
+    //private readonly CaseSummaryRepository _caseSummaryRepository;
+    private readonly ICaseSummaryRepository _caseSummaryRepository;
 
-    public DocumentController(CaseProcessor caseProcessor, CaseSummaryRepository caseSummaryRepository)
+    public DocumentController(CaseProcessor caseProcessor, ICaseSummaryRepository caseSummaryRepository)
     {
         _caseProcessor = caseProcessor;
         _caseSummaryRepository = caseSummaryRepository;
