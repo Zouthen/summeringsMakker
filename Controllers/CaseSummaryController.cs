@@ -111,6 +111,21 @@ namespace summeringsmakker.Controllers
             }
         }
 
+
+        // GET: CaseSummaryController/Details/id
+        public async Task<IActionResult> Details(string id)
+        {
+            
+            //TitleData title = await firebaseService.GetTitle(id, env, cancellationToken);
+            
+            // Fetch case from db based on ID
+
+            return View(
+                //return CaseSummary object
+
+                );
+        }
+
         [HttpPost("create-case-summaries")]
         public async Task<IActionResult> CreateCaseSummaries()
         {

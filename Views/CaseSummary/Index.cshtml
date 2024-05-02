@@ -35,6 +35,7 @@
                 <th>Id</th>
                 <th>Words</th>
                 <th>Summary</th>
+                <th>Details</th>
             </tr>
         </thead>
     </table>
@@ -72,7 +73,15 @@
                         }, "orderable": false,
                     },
 
-                    { "data": "summary", "name": "Summary", "autoWidth": true, "className": "summary-column" }
+                    { "data": "summary", "name": "Summary", "autoWidth": true, "className": "summary-column" },
+                    {
+                        "render": function (data, type, full, meta) {
+                            var actionUrl = `/CaseSummary/Details/${full.caseSummaryId}`;
+                            return `<a class="btn btn-secondary" href="${actionUrl}" role="button">Details</a>`;
+                        },
+                        "orderable": false,
+                        "searchable": false
+                    },
                 ],
                 "columnDefs": [
                     { "targets": 2, "searchable": false, "orderable": false }
