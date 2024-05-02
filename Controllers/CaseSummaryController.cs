@@ -61,8 +61,7 @@ namespace summeringsmakker.Controllers
                 int skip = start != null ? Convert.ToInt32(start) : 0;
                 int recordsTotal = 0;
 
-                // var caseList = _caseSummaryRepository.GetCaseSummaries();
-                var caseList = _caseSummaryRepository.GetCaseSummaries2();
+                var caseList = _caseSummaryRepository.GetCaseSummaries();
 
                 if (!string.IsNullOrEmpty(sortColumn) && !string.IsNullOrEmpty(sortColumnDir))
                 {

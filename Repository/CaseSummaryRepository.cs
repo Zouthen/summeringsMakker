@@ -19,13 +19,8 @@ public class CaseSummaryRepository : ICaseSummaryRepository
     {
         return _context.CaseSummaries.Find(id);
     }
-
-    public List<CaseSummary> GetCaseSummaries()
-    {
-        return _context.CaseSummaries.ToList();
-    }
     
-    public List<CaseSummary> GetCaseSummaries2()
+    public List<CaseSummary> GetCaseSummaries()
     {
         return _context.CaseSummaries
             .Include(cs => cs.CaseSummaryWords)
