@@ -91,7 +91,9 @@ namespace summeringsmakker.Controllers
                 var caseSummaryDtoList = caseList.Select(caseSummary => new CaseSummaryDTO
                 {
                     CaseSummaryId = caseSummary.CaseSummaryId,
-                    Summary = caseSummary.Summary,
+                    //Summary = caseSummary.Summary,
+                    //Summary = String.Join(" ", caseSummary.Summary.Split().Take(25)),
+                    Summary = caseSummary.Summary.Split('.').FirstOrDefault()+"." ?? string.Empty,
                     MermaidCode = caseSummary.MermaidCode,
                     CaseSummaryWords = caseSummary.GetWords().Select(word => word.Text).ToList(),
                     CaseSummaryLegalReferences = caseSummary.GetLegalReferences().Select(legalReference => legalReference.Text).ToList()

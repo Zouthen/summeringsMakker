@@ -6,6 +6,25 @@
 @section Styles {
     <link href="https://cdn.datatables.net/1.10.15/css/dataTables.bootstrap4.min.css" rel="stylesheet">
     <link href="https://cdn.datatables.net/responsive/2.1.1/css/responsive.bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        #caseGrid th, #caseGrid td {
+            white-space: normal; /* Enable word wrapping */
+            word-wrap: break-word; /* Break words that exceed the width */
+        }
+
+        #caseGrid .id-column {
+            width: 10%;
+        }
+
+        #caseGrid .words-column {
+            width: 45%;
+        }
+
+        #caseGrid .summary-column {
+            width: 65%;
+        }
+    </style>
 }
 
 <div class="container">
@@ -14,6 +33,7 @@
         <thead>
             <tr>
                 <th>Id</th>
+                <th>Words</th>
                 <th>Summary</th>
             </tr>
         </thead>
@@ -36,11 +56,26 @@
                     "datatype": "json"
                 },
                 "columns": [
-                    { "data": "caseSummaryId", "name": "Id", "autoWidth": true },
-                    { "data": "summary", "name": "Summary", "autoWidth": true }
+                    { "data": "caseSummaryId", "name": "Id", "autoWidth": true, "className": "id-column" },
+                    {
+                        "data": "caseSummaryWords",
+                        "name": "Words",
+                        "autoWidth": true,
+                        "className": "words-column",
+                        "render": function (data, type, row) {
+                            var html = '<div style="display: flex; flex-wrap: wrap;">';
+                            data.forEach(function (word) {
+                                html += `<div style="width: 33%; padding-top:2px;">${word}</div>`;
+                            });
+                            html += '</div>';
+                            return html;
+                        }, "orderable": false,
+                    },
+
+                    { "data": "summary", "name": "Summary", "autoWidth": true, "className": "summary-column" }
                 ],
                 "columnDefs": [
-                    { "targets": 1, "searchable": false, "orderable": false }
+                    { "targets": 2, "searchable": false, "orderable": false }
                 ]
             });
         });
