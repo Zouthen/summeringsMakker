@@ -117,7 +117,7 @@ namespace summeringsmakker.Controllers
             DateTime endOfDay = startOfDay.AddDays(1).AddTicks(-1);
 
             // Fetch all cases for the current day from the data warehouse
-            var casesForPeriod = _caseRepository.GetCases(startOfDay, endOfDay);
+            var casesForPeriod = _caseRepository.GetAll(startOfDay, endOfDay);
 
             // Extract the IDs of the fetched cases
             var caseIdsForPeriod = casesForPeriod.Select(c => c.Id).ToList();

@@ -1,4 +1,6 @@
-﻿namespace summeringsmakker.Services;
+﻿using System.Text;
+
+namespace summeringsmakker.Services;
 
 using summeringsmakker.Models;
 
@@ -15,8 +17,9 @@ public class FakeDatabaseService : IDatabaseService
         }
 
         var fileToRead = files[id.GetHashCode() % files.Length];
-        var content = await System.IO.File.ReadAllBytesAsync(fileToRead);
-
+        var contentBytes = await System.IO.File.ReadAllBytesAsync(fileToRead);
+        var content = Encoding.UTF8.GetString(contentBytes);
+        
         return new Case { Id = id, Content = content };
     }
 

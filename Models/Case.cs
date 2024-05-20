@@ -3,5 +3,5 @@
 public class Case 
 {
     public string Id { get; set; }
-    public byte[] Content { get; set; }
+    public string Content { get; set; }
 }

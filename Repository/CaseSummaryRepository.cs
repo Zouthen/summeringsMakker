@@ -6,23 +6,16 @@ using summeringsMakker.Repository;
 
 namespace summeringsmakker.Repository;
 
-public class CaseSummaryRepository : ICaseSummaryRepository
+public class CaseSummaryRepository(SummeringsMakkerDbContext context) : ICaseSummaryRepository
 {
-    private readonly SummeringsMakkerDbContext _context;
-
-    public CaseSummaryRepository(SummeringsMakkerDbContext context)
-    {
-        _context = context;
-    }
-
     public CaseSummary GetCaseSummary(int id)
     {
-        return _context.CaseSummaries.Find(id);
+        return context.CaseSummaries.Find(id);
     }
     
     public List<CaseSummary> GetCaseSummaries()
     {
-        return _context.CaseSummaries
+        return context.CaseSummaries
             .Include(cs => cs.CaseSummaryWords)
             .ThenInclude(csw => csw.Word)
             .Include(cs => cs.CaseSummaryLegalReferences)
@@ -32,15 +25,15 @@ public class CaseSummaryRepository : ICaseSummaryRepository
 
     public void AddCaseSummary(CaseSummary caseSummary)
     {
-        _context.CaseSummaries.Add(caseSummary);
-        _context.SaveChanges();
+        context.CaseSummaries.Add(caseSummary);
+        context.SaveChanges();
     }
 
     public void AddCaseSummaryWithReferences(CaseSummary caseSummary)
     {
         foreach (var caseSummaryWord in caseSummary.CaseSummaryWords)
         {
-            var word = _context.Words.FirstOrDefault(w => w.Text == caseSummaryWord.Word.Text);
+            var word = context.Words.FirstOrDefault(w => w.Text == caseSummaryWord.Word.Text);
             if (word != null)
             {
                 caseSummaryWord.Word = word;
@@ -50,30 +43,30 @@ public class CaseSummaryRepository : ICaseSummaryRepository
         foreach (var caseSummaryLegalReference in caseSummary.CaseSummaryLegalReferences)
         {
             var legalReference =
-                _context.LegalReferences.FirstOrDefault(lr => lr.Text == caseSummaryLegalReference.LegalReference.Text);
+                context.LegalReferences.FirstOrDefault(lr => lr.Text == caseSummaryLegalReference.LegalReference.Text);
             if (legalReference != null)
             {
                 caseSummaryLegalReference.LegalReference = legalReference;
             }
         }
 
-        _context.CaseSummaries.Add(caseSummary);
-        _context.SaveChanges();
+        context.CaseSummaries.Add(caseSummary);
+        context.SaveChanges();
     }
 
     public void UpdateCaseSummary(CaseSummary caseSummary)
     {
-        _context.CaseSummaries.Update(caseSummary);
-        _context.SaveChanges();
+        context.CaseSummaries.Update(caseSummary);
+        context.SaveChanges();
     }
 
     public void DeleteCaseSummary(int id)
     {
-        var caseSummary = _context.CaseSummaries.Find(id);
+        var caseSummary = context.CaseSummaries.Find(id);
         if (caseSummary != null)
         {
-            _context.CaseSummaries.Remove(caseSummary);
-            _context.SaveChanges();
+            context.CaseSummaries.Remove(caseSummary);
+            context.SaveChanges();
         }
     }
 

@@ -2,5 +2,6 @@
 
 public interface ICaseRepository
 {
-    List<Case> GetCases(DateTime startOfDay, DateTime endOfDay);
+    List<Case> GetAll(DateTime? startOfDay = null, DateTime? endOfDay = null);
+    Case GetById(string id);
 }
