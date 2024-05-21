@@ -18,11 +18,15 @@
         }
 
         #caseGrid .words-column {
-            width: 45%;
+            width: 25%;
         }
 
         #caseGrid .summary-column {
-            width: 65%;
+            width: 45%;
+        }
+
+        #caseGrid .legal-references-column {
+            width: 20%;
         }
     </style>
 }
@@ -35,6 +39,7 @@
                 <th>Id</th>
                 <th>Words</th>
                 <th>Summary</th>
+                <th>Legal References</th>
                 <th>Details</th>
             </tr>
         </thead>
@@ -74,6 +79,25 @@
                     },
 
                     { "data": "summary", "name": "Summary", "autoWidth": true, "className": "summary-column" },
+                     {
+                        "data": "caseSummaryLegalReferences",
+                        "name": "Legal References",
+                        "autoWidth": true,
+                        "className": "legal-references-column",
+                        "render": function (data, type, row) {
+                            console.log('Rendering legal references:', data);
+                            var html = '<ul>';
+                            for (var key in data) {
+                                if (data.hasOwnProperty(key)) {
+                                    var value = data[key];
+                                    console.log(`Key: ${key}, Value:`, value); // Add detailed logging
+                                    html += `<li>${key}: Found - ${value.found}, Status - ${value.status}</li>`;
+                                }
+                            }
+                            html += '</ul>';
+                            return html;
+                        }, "orderable": false,
+                    },
                     {
                         "render": function (data, type, full, meta) {
                             var actionUrl = `/CaseSummary/Details/${full.caseSummaryId}`;

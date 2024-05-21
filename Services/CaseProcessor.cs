@@ -5,12 +5,10 @@ namespace summeringsMakker.Services;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.IO;
-using iText.Kernel.Pdf;
-using iText.Kernel.Pdf.Canvas.Parser;
-using iText.Kernel.Pdf.Canvas.Parser.Listener;
 using System.Text.RegularExpressions;
 using System.Text;
 using summeringsmakker.Models;
+using summeringsmakker.Services;
 
 public class CaseProcessor
 {
@@ -23,6 +21,7 @@ public class CaseProcessor
         _context = context;
 
         var GPT4V_KEY = File.ReadAllText("EnvVariables/gpt4v_key").Trim();
+        httpClient = new HttpClient();
         httpClient.DefaultRequestHeaders.Add("api-key", GPT4V_KEY);
     }
 
@@ -41,7 +40,7 @@ public class CaseProcessor
         string text;
         if (File.Exists(filePath))
         {
-            text = ExtractTextFromPdf(filePath);
+            text = TextExtractor.ExtractTextFromPdf(filePath);
             string anonymizedText = await AnonymizeText(text);
             await AnalyzeText(caseSummary, anonymizedText);
         }
@@ -70,32 +69,15 @@ public class CaseProcessor
             max_tokens = MAX_TOKENS,
             stream = false
         };
-              
-        var response = await SendRequestToOpenAI(JsonConvert.SerializeObject(payload));
+
+        var response = await SendRequestToOpenAI(JsonConvert.SerializeObject(payload), httpClient);
         dynamic responseObj = JsonConvert.DeserializeObject(response);
         string textAnonymized = (string)responseObj.choices[0].message.content;
         return textAnonymized;
     }
 
 
-    private string ExtractTextFromPdf(string path)
-    {
-        using (PdfReader reader = new PdfReader(path))
-        using (PdfDocument pdfDoc = new PdfDocument(reader))
-        {
-            StringBuilder text = new StringBuilder();
 
-            for (int i = 1; i <= pdfDoc.GetNumberOfPages(); i++)
-            {
-                PdfPage page = pdfDoc.GetPage(i);
-                ITextExtractionStrategy strategy = new SimpleTextExtractionStrategy();
-                string pageText = PdfTextExtractor.GetTextFromPage(page, strategy);
-                text.AppendLine(pageText);
-            }
-
-            return text.ToString();
-        }
-    }
 
     private async Task AnalyzeText(CaseSummary viewModel, string text)
     {
@@ -127,7 +109,7 @@ public class CaseProcessor
             stream = false
         };
 
-        var response = await SendRequestToOpenAI(JsonConvert.SerializeObject(payload));
+        var response = await SendRequestToOpenAI(JsonConvert.SerializeObject(payload), httpClient);
         Console.WriteLine("Summary: " + response);
         //caseSummary.Summary = response;
         dynamic responseObj = JsonConvert.DeserializeObject(response);
@@ -154,7 +136,7 @@ public class CaseProcessor
             max_tokens = 200,
             stream = false
         };
-        var response = await SendRequestToOpenAI(JsonConvert.SerializeObject(payload));
+        var response = await SendRequestToOpenAI(JsonConvert.SerializeObject(payload), httpClient);
         Console.WriteLine("Word Frequencies: " + response);
         dynamic responseObj = JsonConvert.DeserializeObject(response);
         string wordFrequencies = responseObj.choices[0].message.content;
@@ -167,7 +149,7 @@ public class CaseProcessor
             var parts = line.Split(new[] { " - " }, StringSplitOptions.RemoveEmptyEntries);
             if (parts.Length == 2)
             {
-                string wordsPart = parts[0].Replace("-","").Trim();
+                string wordsPart = parts[0].Replace("-", "").Trim();
                 wordsPart = wordsPart.Substring(wordsPart.IndexOf('.') + 1).Trim(); // Remove the numbering.
                 int frequencyPart = int.Parse(parts[1].Trim());
 
@@ -196,7 +178,7 @@ public class CaseProcessor
             stream = false
         };
 
-        var response = await SendRequestToOpenAI(JsonConvert.SerializeObject(payload));
+        var response = await SendRequestToOpenAI(JsonConvert.SerializeObject(payload), httpClient);
         Console.WriteLine("Mermaid Diagram: " + response);
         //caseSummary.MermaidDiagram = response;
         dynamic responseObj = JsonConvert.DeserializeObject(response);
@@ -210,7 +192,7 @@ public class CaseProcessor
         {
             messages = new List<object>
             {
-                new { role = "system", content = "Identify and list all legal references in the text provided." },
+                new { role = "system", content = "Identify and list all legal references in the text provided and return them exactly as you found them with no diviation." },
                 new { role = "user", content = text }
             },
             temperature = TEMPERATURE,
@@ -220,7 +202,7 @@ public class CaseProcessor
         };
 
 
-        var response = await SendRequestToOpenAI(JsonConvert.SerializeObject(payload));
+        var response = await SendRequestToOpenAI(JsonConvert.SerializeObject(payload), httpClient);
         Console.WriteLine("Legal References Found: " + response);
 
         dynamic responseObj = JsonConvert.DeserializeObject(response);
@@ -235,13 +217,16 @@ public class CaseProcessor
                 var caseSummaryLegalReference = new CaseSummaryLegalReference
                 { LegalReference = legalReference, CaseSummary = viewModel };
 
-                viewModel.CaseSummaryLegalReferences.Add(caseSummaryLegalReference);
+                //the following line is for the DB, creating another entity (join table reference) this is done using pointers
                 legalReference.CaseSummaryLegalReferences.Add(caseSummaryLegalReference);
+                viewModel.CaseSummaryLegalReferences.Add(caseSummaryLegalReference);
             }
         }
     }
 
-    private async Task<string> SendRequestToOpenAI(string jsonContent) //vi bør lige give den her et andet navn så vi ikke får ballade. tænker rename fra OpenAi --> AI
+
+
+    public static async Task<string> SendRequestToOpenAI(string jsonContent, HttpClient httpClient) //vi bør lige give den her et andet navn så vi ikke får ballade. tænker rename fra OpenAi --> AI
     {
         var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
         var response = await httpClient.PostAsync(GPT4V_ENDPOINT, content);
@@ -257,6 +242,7 @@ public class CaseProcessor
         }
     }
 }
+
 
 class Message
 {

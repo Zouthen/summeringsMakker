@@ -28,7 +28,7 @@ public class DocumentController : Controller
 
         _caseSummaryRepository.AddCaseSummary(viewModelCase);
 
-        var a = 10;
+        
 
         return View(viewModelCase);
     }
