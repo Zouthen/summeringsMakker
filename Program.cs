@@ -23,6 +23,9 @@ public class Program
         // Add DbContext to the services
         AddDatabaseContext(builder);
 
+        // Register the Checker service
+        builder.Services.AddScoped<Checker>();
+
         // Register your services
         builder.Services.AddScoped<CaseProcessor>();
         builder.Services.AddScoped<ICaseRepository, CaseRepository>(); // Adjust CaseRepository to your actual implementation class

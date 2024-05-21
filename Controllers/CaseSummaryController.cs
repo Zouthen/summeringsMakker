@@ -5,12 +5,17 @@ using System;
 using summeringsmakker.Models;
 using summeringsMakker.Repository;
 using summeringsmakker.Services;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.AspNetCore.Authorization;
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Reflection;
 using summeringsmakker.Models.DTO;
+using summeringsMakker.Services;
 
 // using summeringsMakker.Services;
 
@@ -24,13 +29,15 @@ namespace summeringsmakker.Controllers
         private readonly ILogger<CaseSummaryController> _logger;
         private readonly ICaseRepository _caseRepository;
         private readonly ICaseSummaryRepository _caseSummaryRepository;
+        private readonly Checker _checker;
 
         public CaseSummaryController(ILogger<CaseSummaryController> logger, ICaseRepository caseRepository,
-            ICaseSummaryRepository caseSummaryRepository)
+            ICaseSummaryRepository caseSummaryRepository, Checker checker)
         {
             _logger = logger;
             _caseRepository = caseRepository;
             _caseSummaryRepository = caseSummaryRepository;
+            _checker = checker;
         }
 
 
@@ -46,78 +53,92 @@ namespace summeringsmakker.Controllers
 
         [HttpPost]
         public async Task<ActionResult> LoadCases(CaseSummary caseSummary, CancellationToken cancellationToken)
+{
+    try
+    {
+        var draw = Request.Form["draw"].FirstOrDefault();
+        var start = Request.Form["start"].FirstOrDefault();
+        var length = Request.Form["length"].FirstOrDefault();
+        var sortColumnIndex = Request.Form["order[0][column]"].FirstOrDefault();
+        var sortColumn = Request.Form[$"columns[{sortColumnIndex}][name]"].FirstOrDefault();
+        var sortColumnDir = Request.Form["order[0][dir]"].FirstOrDefault();
+        var searchValue = Request.Form["search[value]"].FirstOrDefault();
+
+        int pageSize = length != null ? Convert.ToInt32(length) : 0;
+        int skip = start != null ? Convert.ToInt32(start) : 0;
+        int recordsTotal = 0;
+
+        var caseList = _caseSummaryRepository.GetCaseSummaries();
+
+        if (!string.IsNullOrEmpty(sortColumn) && !string.IsNullOrEmpty(sortColumnDir))
         {
-            try
+            var isDescending = sortColumnDir.Equals("desc", StringComparison.OrdinalIgnoreCase);
+
+            caseList = sortColumn switch
             {
-                var draw = Request.Form["draw"].FirstOrDefault();
-                var start = Request.Form["start"].FirstOrDefault();
-                var length = Request.Form["length"].FirstOrDefault();
-                var sortColumnIndex = Request.Form["order[0][column]"].FirstOrDefault();
-                var sortColumn = Request.Form[$"columns[{sortColumnIndex}][name]"].FirstOrDefault();
-                var sortColumnDir = Request.Form["order[0][dir]"].FirstOrDefault();
-                var searchValue = Request.Form["search[value]"].FirstOrDefault();
-
-                int pageSize = length != null ? Convert.ToInt32(length) : 0;
-                int skip = start != null ? Convert.ToInt32(start) : 0;
-                int recordsTotal = 0;
-
-                var caseList = _caseSummaryRepository.GetCaseSummaries();
-
-                if (!string.IsNullOrEmpty(sortColumn) && !string.IsNullOrEmpty(sortColumnDir))
-                {
-                    var isDescending = sortColumnDir.Equals("desc", StringComparison.OrdinalIgnoreCase);
-
-                    caseList = sortColumn switch
-                    {
-                        "Id" => isDescending
-                            ? caseList.OrderByDescending(t => t.CaseSummaryId).ToList()
-                            : caseList.OrderBy(t => t.CaseSummaryId).ToList(),
-                        _ => caseList
-                    };
-                }
-
-                if (!string.IsNullOrEmpty(searchValue))
-                {
-                    var normalizedSearchValue = SearchUtility.NormalizeString(searchValue);
-
-                    caseList = caseList.Where(caseSummary =>
-                        SearchUtility.NormalizeString(caseSummary.CaseSummaryId.ToString())
-                            .Contains(normalizedSearchValue) ||
-                        caseSummary.GetWords().Any(word => SearchUtility.NormalizeString(word.Text).Contains(normalizedSearchValue))
-                    ).ToList();
-                }
-
-                // Using DTO to avoid circular reference
-                var caseSummaryDtoList = caseList.Select(caseSummary => new CaseSummaryDTO
-                {
-                    CaseSummaryId = caseSummary.CaseSummaryId,
-                    //Summary = caseSummary.Summary,
-                    //Summary = String.Join(" ", caseSummary.Summary.Split().Take(25)),
-                    Summary = caseSummary.Summary.Split('.').FirstOrDefault()+"." ?? string.Empty,
-                    MermaidCode = caseSummary.MermaidCode,
-                    CaseSummaryWords = caseSummary.GetWords().Select(word => word.Text).ToList(),
-                    CaseSummaryLegalReferences = caseSummary.GetLegalReferences().Select(legalReference => legalReference.Text).ToList()
-                }).ToList();
-
-                var data = caseSummaryDtoList.Skip(skip).Take(pageSize).ToList();
-                recordsTotal = caseSummaryDtoList.Count();
-
-                return Json(new
-                    { draw = draw, recordsFiltered = recordsTotal, recordsTotal = recordsTotal, data = data });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { error = ex.Message });
-            }
+                "Id" => isDescending
+                    ? caseList.OrderByDescending(t => t.CaseSummaryId).ToList()
+                    : caseList.OrderBy(t => t.CaseSummaryId).ToList(),
+                _ => caseList
+            };
         }
+
+        if (!string.IsNullOrEmpty(searchValue))
+        {
+            var normalizedSearchValue = SearchUtility.NormalizeString(searchValue);
+
+            caseList = caseList.Where(caseSummary =>
+                SearchUtility.NormalizeString(caseSummary.CaseSummaryId.ToString())
+                    .Contains(normalizedSearchValue) ||
+                caseSummary.GetWords().Any(word => SearchUtility.NormalizeString(word.Text).Contains(normalizedSearchValue))
+            ).ToList();
+        }
+
+        var legalReferences = caseList
+            .SelectMany(caseSummary => caseSummary.GetLegalReferences().Select(legalReference => legalReference.Text))
+            .Distinct()
+            .ToList();
+
+        var truthTableResult = await _checker.TruthTable(legalReferences);
+
+        var caseSummaryDtoList = caseList.Select(caseSummary => new CaseSummaryDTO    
+        {
+            CaseSummaryId = caseSummary.CaseSummaryId,
+            Summary = caseSummary.Summary.Split('.').FirstOrDefault() + "." ?? string.Empty,
+            MermaidCode = caseSummary.MermaidCode,
+            CaseSummaryWords = caseSummary.GetWords().Select(word => word.Text).ToList(),
+            CaseSummaryLegalReferences = caseSummary.GetLegalReferences()
+            .Select(legalReference => legalReference.Text)
+            .ToDictionary(
+                text => text,
+                text => truthTableResult.TryGetValue(text, out var result) 
+                    ? new LegalReferenceStatus { Found = result.Item1, Status = result.Item2 }
+                    : new LegalReferenceStatus { Found = false, Status = "not found" }
+            )
+        }).ToList();
+
+        _logger.LogInformation("CaseSummaryDTO List: {@caseSummaryDtoList}", caseSummaryDtoList);
+
+        var data = caseSummaryDtoList.Skip(skip).Take(pageSize).ToList();
+        recordsTotal = caseSummaryDtoList.Count();
+
+        return Json(new
+        { draw = draw, recordsFiltered = recordsTotal, recordsTotal = recordsTotal, data = data });
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error loading cases");
+        return Json(new { error = ex.Message });
+    }
+}
 
 
         // GET: CaseSummaryController/Details/id
         public async Task<IActionResult> Details(string id)
         {
-            
+
             //TitleData title = await firebaseService.GetTitle(id, env, cancellationToken);
-            
+
             // Fetch case from db based on ID
 
             return View(
@@ -164,19 +185,5 @@ namespace summeringsmakker.Controllers
             return Ok();
         }
 
-        [HttpPost("create-case-summaries")]
-        public IActionResult CreateCaseSummaries([FromBody] CaseSummariesRequest request)
-        {
-            // DateTime startDate = request.StartDate;
-            // DateTime endDate = request.EndDate;
-
-            // Logic to create case summaries from startDate to endDate
-
-            // For demonstration purposes, let's just return a success message
-            // return Ok($"Case summaries created from '{startDate}' to '{endDate}'");
-            return Ok();
-        }
-
-        // get case summaries by word [liste af words]
     }
 }
