@@ -136,15 +136,38 @@ namespace summeringsmakker.Controllers
         // GET: CaseSummaryController/Details/id
         public async Task<IActionResult> Details(string id)
         {
+            var caseSummary = _caseSummaryRepository.GetById(id);
 
-            //TitleData title = await firebaseService.GetTitle(id, env, cancellationToken);
+            if (caseSummary == null)
+            {
+                return NotFound();
+            }
 
-            // Fetch case from db based on ID
+            var legalReferences = caseSummary.CaseSummaryLegalReferences
+            .Select(cslr => cslr.LegalReference.Text)
+            .Distinct()
+            .ToList();
 
-            return View(
-                //return CaseSummary object
+            // live check
+            var truthTableResult = await _checker.TruthTable(legalReferences);
 
-                );
+            var caseSummaryDto = new CaseSummaryDTO    
+            {
+                CaseSummaryId = caseSummary.CaseSummaryId,
+                Summary = caseSummary.Summary,
+                MermaidCode = caseSummary.MermaidCode,
+                CaseSummaryWords = caseSummary.GetWords().Select(word => word.Text).ToList(),
+                CaseSummaryLegalReferences = caseSummary.GetLegalReferences()
+                .Select(legalReference => legalReference.Text)
+                .ToDictionary(
+                    text => text,
+                    text => truthTableResult.TryGetValue(text, out var result) 
+                        ? new LegalReferenceStatus { Found = result.Item1, Status = result.Item2 }
+                        : new LegalReferenceStatus { Found = false, Status = "not found" }
+                ),
+            };
+
+            return View(caseSummaryDto);
         }
 
         [HttpPost("create-case-summaries")]

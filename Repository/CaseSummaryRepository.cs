@@ -8,9 +8,16 @@ namespace summeringsmakker.Repository;
 
 public class CaseSummaryRepository(SummeringsMakkerDbContext context) : ICaseSummaryRepository
 {
-    public CaseSummary GetCaseSummary(int id)
+    public CaseSummary GetById(string id)
     {
-        return context.CaseSummaries.Find(id);
+        int parsedId = int.Parse(id); // Parse the string ID to an integer.
+    
+        return context.CaseSummaries
+        .Include(cs => cs.CaseSummaryWords)
+            .ThenInclude(csw => csw.Word)
+        .Include(cs => cs.CaseSummaryLegalReferences)
+            .ThenInclude(cslr => cslr.LegalReference)
+        .FirstOrDefault(cs => cs.CaseSummaryId == parsedId);
     }
     
     public List<CaseSummary> GetCaseSummaries()

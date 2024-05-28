@@ -1,5 +1,4 @@
-﻿@model CaseSummary
-
+﻿@model summeringsmakker.Models.DTO.CaseSummaryDTO
 
 <h2>Document Analysis Results</h2>
 
@@ -14,23 +13,22 @@
 
     <h3>Word Frequencies</h3>
     <ul>
-        @foreach (var caseSummaryWord in Model.CaseSummaryWords)
+        @foreach (var word in Model.CaseSummaryWords)
         {
-            <li>@caseSummaryWord.Word.Text - @caseSummaryWord.Frequency times</li>
+            <li>@word</li>
         }
     </ul>
 
     <h3>Mermaid Diagram</h3>
-    @Html.Raw(Model.MermaidCode)
     <div class="mermaid">
         @Html.Raw(Model.MermaidCode)
     </div>
 
     <h3>Legal References</h3>
     <ul>
-        @foreach (var legalReference in Model.GetLegalReferences())
+        @foreach (var legalReference in Model.CaseSummaryLegalReferences)
         {
-            <li>@legalReference.Text</li>
+            <li>@legalReference.Key - Found: @legalReference.Value.Found, Status: @legalReference.Value.Status</li>
         }
     </ul>
 </div>
