@@ -33,16 +33,26 @@ public class CaseProcessor
     private const int MAX_TOKENS = 4096;
 
 
-    public async Task<CaseSummary> ProcessFile(string filePath)
+    public async Task<CaseSummary> ProcessFile(Case caseItem)
     {
 
-        var caseSummary = new CaseSummary();
-        string text;
-        if (File.Exists(filePath))
+        var caseSummary = new CaseSummary
         {
-            text = TextExtractor.ExtractTextFromPdf(filePath);
+            CaseSummaryId = caseItem.Id
+        };
+        string text = caseItem.Content;
+
+        try
+        {
+            // Anonymize text
             string anonymizedText = await AnonymizeText(text);
+            // Analyze text
             await AnalyzeText(caseSummary, anonymizedText);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred while processing case {caseItem.Id}: {ex.Message}");
+            throw; // Re-throw the exception to handle it further up the call stack if needed
         }
 
         return caseSummary;

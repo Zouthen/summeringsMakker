@@ -30,14 +30,16 @@ namespace summeringsmakker.Controllers
         private readonly ICaseRepository _caseRepository;
         private readonly ICaseSummaryRepository _caseSummaryRepository;
         private readonly Checker _checker;
+        private readonly CaseProcessor _caseProcessor;
 
         public CaseSummaryController(ILogger<CaseSummaryController> logger, ICaseRepository caseRepository,
-            ICaseSummaryRepository caseSummaryRepository, Checker checker)
+            ICaseSummaryRepository caseSummaryRepository, Checker checker, CaseProcessor caseProcessor)
         {
             _logger = logger;
             _caseRepository = caseRepository;
             _caseSummaryRepository = caseSummaryRepository;
             _checker = checker;
+            _caseProcessor = caseProcessor;
         }
 
 
@@ -134,9 +136,9 @@ namespace summeringsmakker.Controllers
 
 
         // GET: CaseSummaryController/Details/id
-        public async Task<IActionResult> Details(string id)
+        public async Task<IActionResult> Details(int id)
         {
-            var caseSummary = _caseSummaryRepository.GetById(id);
+            var caseSummary = _caseSummaryRepository.GetById(id);   
 
             if (caseSummary == null)
             {
@@ -197,8 +199,8 @@ namespace summeringsmakker.Controllers
             string filePath = "afgørelse.pdf"; // todo remove alter hardcoded path
             foreach (var caseWithoutSummary in casesWithoutSummaries)
             {
-                // var caseSummary = await CaseProcessor.ProcessFile(filePath);
-                // caseSummaries.Add(caseSummary);
+                var caseSummary = await _caseProcessor.ProcessFile(caseWithoutSummary);
+                caseSummaries.Add(caseSummary);
             }
 
             // add to database

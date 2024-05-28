@@ -20,18 +20,18 @@ public class DocumentController : Controller
         _caseSummaryRepository = caseSummaryRepository;
     }
 
-    public async Task<IActionResult> Process()
-    {
-        var viewModelCase = new CaseSummary();
-        string filePath = "afgørelse.pdf";
-        viewModelCase = await _caseProcessor.ProcessFile(filePath);
+    // public async Task<IActionResult> Process()
+    // {
+    //     var viewModelCase = new CaseSummary();
+    //     string filePath = "afgørelse.pdf";
+    //     viewModelCase = await _caseProcessor.ProcessFile(filePath);
 
-        _caseSummaryRepository.AddCaseSummary(viewModelCase);
+    //     _caseSummaryRepository.AddCaseSummary(viewModelCase);
 
         
 
-        return View(viewModelCase);
-    }
+    //     return View(viewModelCase);
+    // }
     
     /*
     public async IActionResult save()

@@ -20,7 +20,7 @@ public class CaseRepository : ICaseRepository
         
             cases.Add(new Case
             {
-                Id = id,
+                Id = int.Parse(id),
                 Content = (content)
             });
         }
@@ -28,7 +28,7 @@ public class CaseRepository : ICaseRepository
         return cases;
     }
 
-    public Case GetById(string id)
+    public Case GetById(int id)
     {
         var filePath = System.IO.Path.Combine(Path, $"{id}.txt");
         if (!File.Exists(filePath))

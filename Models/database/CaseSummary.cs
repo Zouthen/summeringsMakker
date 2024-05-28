@@ -3,6 +3,7 @@
 public class CaseSummary
 {
     public int CaseSummaryId { get; set; }
+    public int CaseId { get; set; }
     public string Summary { get; set; }
     public string MermaidCode { get; set; }
     public List<CaseSummaryWord> CaseSummaryWords { get; set; }

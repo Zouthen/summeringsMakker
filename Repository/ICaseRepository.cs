@@ -3,5 +3,5 @@
 public interface ICaseRepository
 {
     List<Case> GetAll(DateTime? startOfDay = null, DateTime? endOfDay = null);
-    Case GetById(string id);
+    Case GetById(int id);
 }

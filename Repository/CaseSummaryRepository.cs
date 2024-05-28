@@ -8,16 +8,16 @@ namespace summeringsmakker.Repository;
 
 public class CaseSummaryRepository(SummeringsMakkerDbContext context) : ICaseSummaryRepository
 {
-    public CaseSummary GetById(string id)
+    public CaseSummary GetById(int id)
     {
-        int parsedId = int.Parse(id); // Parse the string ID to an integer.
+        //int parsedId = int.Parse(id); // Parse the string ID to an integer.
     
         return context.CaseSummaries
         .Include(cs => cs.CaseSummaryWords)
             .ThenInclude(csw => csw.Word)
         .Include(cs => cs.CaseSummaryLegalReferences)
             .ThenInclude(cslr => cslr.LegalReference)
-        .FirstOrDefault(cs => cs.CaseSummaryId == parsedId);
+        .FirstOrDefault(cs => cs.CaseSummaryId == id);
     }
     
     public List<CaseSummary> GetCaseSummaries()
@@ -77,9 +77,9 @@ public class CaseSummaryRepository(SummeringsMakkerDbContext context) : ICaseSum
         }
     }
 
-    public HashSet<string> GetCaseSummariesIds(List<string> periodCaseIds)
+    public HashSet<int> GetCaseSummariesIds(List<int> periodCaseIds)
     {
-        HashSet<string> Ids = new HashSet<string>();
+        HashSet<int> Ids = new HashSet<int>();
 
         periodCaseIds.ForEach(periodId => { Ids.Add(periodId); });
 
