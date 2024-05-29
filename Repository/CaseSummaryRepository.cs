@@ -10,8 +10,6 @@ public class CaseSummaryRepository(SummeringsMakkerDbContext context) : ICaseSum
 {
     public CaseSummary GetById(int id)
     {
-        //int parsedId = int.Parse(id); // Parse the string ID to an integer.
-    
         return context.CaseSummaries
         .Include(cs => cs.CaseSummaryWords)
             .ThenInclude(csw => csw.Word)

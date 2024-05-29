@@ -11,7 +11,6 @@ using summeringsMakker.Services;
 public class DocumentController : Controller
 {
     private readonly CaseProcessor _caseProcessor;
-    //private readonly CaseSummaryRepository _caseSummaryRepository;
     private readonly ICaseSummaryRepository _caseSummaryRepository;
 
     public DocumentController(CaseProcessor caseProcessor, ICaseSummaryRepository caseSummaryRepository)
@@ -19,7 +18,8 @@ public class DocumentController : Controller
         _caseProcessor = caseProcessor;
         _caseSummaryRepository = caseSummaryRepository;
     }
-
+    
+    // TODO: make pdf path work
     // public async Task<IActionResult> Process()
     // {
     //     var viewModelCase = new CaseSummary();
@@ -33,22 +33,5 @@ public class DocumentController : Controller
     //     return View(viewModelCase);
     // }
     
-    /*
-    public async IActionResult save()
-    {
     
-
-        CaseSummary = new CaseSummary 
-        {
-            
-
-
-        }
-
-
-        // save i db case summary ord
-        _caseSummaryRepository.Add(caseSummaries);
-
-    }
-    */
 }

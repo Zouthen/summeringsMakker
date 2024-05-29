@@ -68,9 +68,7 @@ public class CaseProcessor
                 new
                 {
                     role = "user",
-                    //content ="Redact personal data from the provided text string using the following tokens: Replace names with {person}. Replace dates with {date}. Replace locations with {location}. Replace organization names with {organization}. Replace unique identifiers with {identifier}. Replace any other personal information tokens with {personal_info}. Replace descriptors for types of persons (e.g., 'plaintiff', 'defendant') with {person_type}. Ensure that the redacted text maintains readability and preserves the essential legal context of the document."
                     content ="Redact personal data from the provided text string using the following tokens: Replace names with 'person'. Replace dates with 'date'. Replace locations with 'location'. Replace organization names with 'organization'. Replace unique identifiers with 'identifier'. Replace any other personal information tokens with 'personal_info'. Replace descriptors for types of persons (e.g., 'plaintiff', 'defendant') with 'person_type'. Ensure that the redacted text maintains readability and preserves the essential legal context of the document."
-
                 },
                 new { role = "user", content = text }
             },
@@ -80,7 +78,7 @@ public class CaseProcessor
             stream = false
         };
 
-        var response = await SendRequestToOpenAI(JsonConvert.SerializeObject(payload), httpClient);
+        var response = await SendRequestToAI(JsonConvert.SerializeObject(payload), httpClient);
         dynamic responseObj = JsonConvert.DeserializeObject(response);
         string textAnonymized = (string)responseObj.choices[0].message.content;
         return textAnonymized;
@@ -119,9 +117,8 @@ public class CaseProcessor
             stream = false
         };
 
-        var response = await SendRequestToOpenAI(JsonConvert.SerializeObject(payload), httpClient);
+        var response = await SendRequestToAI(JsonConvert.SerializeObject(payload), httpClient);
         Console.WriteLine("Summary: " + response);
-        //caseSummary.Summary = response;
         dynamic responseObj = JsonConvert.DeserializeObject(response);
         string tempSummary = (string)responseObj.choices[0].message.content;
         viewModel.Summary = tempSummary.Replace("Resume:", "").Trim();
@@ -146,7 +143,7 @@ public class CaseProcessor
             max_tokens = 200,
             stream = false
         };
-        var response = await SendRequestToOpenAI(JsonConvert.SerializeObject(payload), httpClient);
+        var response = await SendRequestToAI(JsonConvert.SerializeObject(payload), httpClient);
         Console.WriteLine("Word Frequencies: " + response);
         dynamic responseObj = JsonConvert.DeserializeObject(response);
         string wordFrequencies = responseObj.choices[0].message.content;
@@ -155,7 +152,6 @@ public class CaseProcessor
 
         foreach (string line in lines)
         {
-            // Split each line into word and frequency
             var parts = line.Split(new[] { " - " }, StringSplitOptions.RemoveEmptyEntries);
             if (parts.Length == 2)
             {
@@ -188,9 +184,8 @@ public class CaseProcessor
             stream = false
         };
 
-        var response = await SendRequestToOpenAI(JsonConvert.SerializeObject(payload), httpClient);
+        var response = await SendRequestToAI(JsonConvert.SerializeObject(payload), httpClient);
         Console.WriteLine("Mermaid Diagram: " + response);
-        //caseSummary.MermaidDiagram = response;
         dynamic responseObj = JsonConvert.DeserializeObject(response);
         string mermaidTemp = (string)responseObj.choices[0].message.content;
         viewModel.MermaidCode = mermaidTemp.Replace("```mermaid", "").Replace("```", "").Replace("(EF)", "EF").Trim();
@@ -212,7 +207,7 @@ public class CaseProcessor
         };
 
 
-        var response = await SendRequestToOpenAI(JsonConvert.SerializeObject(payload), httpClient);
+        var response = await SendRequestToAI(JsonConvert.SerializeObject(payload), httpClient);
         Console.WriteLine("Legal References Found: " + response);
 
         dynamic responseObj = JsonConvert.DeserializeObject(response);
@@ -234,9 +229,7 @@ public class CaseProcessor
         }
     }
 
-
-
-    public static async Task<string> SendRequestToOpenAI(string jsonContent, HttpClient httpClient) //vi bør lige give den her et andet navn så vi ikke får ballade. tænker rename fra OpenAi --> AI
+    public static async Task<string> SendRequestToAI(string jsonContent, HttpClient httpClient) 
     {
         var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
         var response = await httpClient.PostAsync(GPT4V_ENDPOINT, content);

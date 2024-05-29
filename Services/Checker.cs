@@ -63,7 +63,7 @@ public class Checker
                     stream = false
                 };
 
-                var response = await CaseProcessor.SendRequestToOpenAI(JsonConvert.SerializeObject(payload), httpClient);
+                var response = await CaseProcessor.SendRequestToAI(JsonConvert.SerializeObject(payload), httpClient);
                 dynamic responseObj = JsonConvert.DeserializeObject(response);
 
                 string truthTableResponse = (string)responseObj.choices[0].message.content;
