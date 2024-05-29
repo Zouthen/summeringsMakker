@@ -1,4 +1,6 @@
-﻿namespace summeringsmakker.Repository;
+﻿using summeringsmakker.Models;
+
+namespace summeringsmakker.Repository;
 
 public interface ICaseRepository
 {
