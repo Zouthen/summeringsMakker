@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using summeringsmakker.Repository;
 using summeringsmakker.Models;
+using summeringsMakker.Repository;
+using summeringsMakker.Services;
 
 
 namespace summeringsmakker.Controllers

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Text;
 using summeringsmakker.Models;
+using summeringsmakker.Repository;
 
 namespace summeringsmakker.Controllers;
 
