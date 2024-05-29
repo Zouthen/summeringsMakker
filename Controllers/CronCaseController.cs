@@ -13,13 +13,13 @@ namespace summeringsmakker.Controllers
 {
     [ApiController]
     [Route("cron")]
-    public class ApiCaseController : ControllerBase
+    public class CronCaseController : ControllerBase
     {
         private readonly ICaseRepository _caseRepository;
         private readonly ICaseSummaryRepository _caseSummaryRepository;
         private readonly CaseProcessor _caseProcessor;
 
-        public ApiCaseController(ICaseRepository caseRepository, ICaseSummaryRepository caseSummaryRepository)
+        public CronCaseController(ICaseRepository caseRepository, ICaseSummaryRepository caseSummaryRepository)
         {
             _caseRepository = caseRepository;
             _caseSummaryRepository = caseSummaryRepository;
@@ -39,7 +39,7 @@ namespace summeringsmakker.Controllers
             var caseIdsForPeriod = casesForPeriod.Select(c => c.Id).ToList();
 
             // Get the IDs of the case summaries that already exist
-            var existingCaseSummaryIds = _caseSummaryRepository.GetCaseSummariesIds(caseIdsForPeriod).ToHashSet();
+            var existingCaseSummaryIds = _caseSummaryRepository.GetCaseSummariesIds(caseIdsForPeriod);
 
             // Filter out the cases that already have summaries
             var casesWithoutSummaries = casesForPeriod
@@ -51,6 +51,7 @@ namespace summeringsmakker.Controllers
 
             foreach (var caseWithoutSummary in casesWithoutSummaries)
             {
+            
                 var caseSummary = await _caseProcessor.ProcessFile(caseWithoutSummary);
                 caseSummaries.Add(caseSummary);
             }

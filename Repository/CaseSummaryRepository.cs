@@ -77,15 +77,24 @@ public class CaseSummaryRepository(SummeringsMakkerDbContext context) : ICaseSum
 
     public HashSet<int> GetCaseSummariesIds(List<int> periodCaseIds)
     {
-        HashSet<int> Ids = new HashSet<int>();
+        var ids = context.CaseSummaries
+                        .AsNoTracking()
+                        .Where(cs => periodCaseIds.Contains(cs.CaseSummaryId))
+                        .Select(cs => cs.CaseId)
+                        .ToHashSet();
 
-        periodCaseIds.ForEach(periodId => { Ids.Add(periodId); });
-
-        return Ids;
+        return ids;
     }
 
     public void Add(List<CaseSummary> caseSummaries)
     {
-        throw new NotImplementedException();
+        if (caseSummaries == null || !caseSummaries.Any())
+        {
+            throw new ArgumentNullException(nameof(caseSummaries), "The list of case summaries cannot be null or empty.");
+        }
+
+        context.CaseSummaries.AddRange(caseSummaries);
+        context.SaveChanges();
     }
+
 }
