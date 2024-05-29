@@ -1,20 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using summeringsmakker.DTOs;
-using System;
 using summeringsmakker.Models;
 using summeringsmakker.Services;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization.Infrastructure;
-using Microsoft.AspNetCore.Authorization;
-using System.ComponentModel.DataAnnotations;
-using System.Globalization;
-using System.Reflection;
 using summeringsmakker.Models.DTO;
 using summeringsmakker.Repository;
+using summeringsMakker.Repository;
+using summeringsMakker.Services;
 
 namespace summeringsmakker.Controllers
 {
