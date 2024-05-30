@@ -74,17 +74,27 @@ public class CaseSummaryRepository(SummeringsMakkerDbContext context) : ICaseSum
             context.SaveChanges();
         }
     }
-
-    public HashSet<int> GetCaseSummariesIds(List<int> periodCaseIds)
+    
+    public HashSet<int> GetCaseIds(List<int> periodCaseIds)
     {
         var ids = context.CaseSummaries
                         .AsNoTracking()
-                        .Where(cs => periodCaseIds.Contains(cs.CaseSummaryId))
-                        .Select(cs => cs.CaseId)
+                        .Where(cs => periodCaseIds.Contains(cs.CaseId)) // Ensure cs.CaseId is the intended field
+                        .Select(cs => cs.CaseId) // This selects the CaseId from those filtered entries
                         .ToHashSet();
-
         return ids;
     }
+      /*
+    public HashSet<int> GetCaseIds(List<int> periodCaseIds)
+    {
+        // Parameterize the input to prevent SQL injection
+        var ids = context.CaseSummaries
+                        .FromSqlRaw("SELECT CaseId FROM CaseSummaries WHERE CaseId IN ({0})", periodCaseIds)
+                        .AsEnumerable()
+                        .ToHashSet();
+        return ids;
+    }
+*/
 
     public void Add(List<CaseSummary> caseSummaries)
     {

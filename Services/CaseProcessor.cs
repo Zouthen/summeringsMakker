@@ -38,7 +38,7 @@ public class CaseProcessor
 
         var caseSummary = new CaseSummary
         {
-            CaseSummaryId = caseItem.Id
+            CaseId = caseItem.Id
         };
         string text = caseItem.Content;
 

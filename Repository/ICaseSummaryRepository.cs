@@ -4,7 +4,7 @@ namespace summeringsMakker.Repository;
 
 public interface ICaseSummaryRepository
 {
-    HashSet<int> GetCaseSummariesIds(List<int> periodCaseIds);
+    HashSet<int> GetCaseIds(List<int> periodCaseIds);
     void Add(List<CaseSummary> caseSummaries);
 
 
