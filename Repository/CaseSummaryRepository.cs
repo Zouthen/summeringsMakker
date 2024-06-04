@@ -1,6 +1,5 @@
 ﻿using summeringsmakker.Models;
 using summeringsmakker.Data;
-using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using summeringsMakker.Repository;
 
@@ -8,16 +7,16 @@ namespace summeringsmakker.Repository;
 
 public class CaseSummaryRepository(SummeringsMakkerDbContext context) : ICaseSummaryRepository
 {
-    public CaseSummary GetById(int id)
+    public CaseSummary? GetById(int id)
     {
         return context.CaseSummaries
-        .Include(cs => cs.CaseSummaryWords)
+            .Include(cs => cs.CaseSummaryWords)
             .ThenInclude(csw => csw.Word)
-        .Include(cs => cs.CaseSummaryLegalReferences)
+            .Include(cs => cs.CaseSummaryLegalReferences)
             .ThenInclude(cslr => cslr.LegalReference)
-        .FirstOrDefault(cs => cs.CaseSummaryId == id);
+            .FirstOrDefault(cs => cs.CaseSummaryId == id);
     }
-    
+
     public List<CaseSummary> GetCaseSummaries()
     {
         return context.CaseSummaries
@@ -28,13 +27,13 @@ public class CaseSummaryRepository(SummeringsMakkerDbContext context) : ICaseSum
             .ToList();
     }
 
-    public void AddCaseSummary(CaseSummary caseSummary)
+    public void AddCaseSummary(CaseSummary? caseSummary)
     {
         context.CaseSummaries.Add(caseSummary);
         context.SaveChanges();
     }
 
-    public void AddCaseSummaryWithReferences(CaseSummary caseSummary)
+    public void AddCaseSummaryWithReferences(CaseSummary? caseSummary)
     {
         foreach (var caseSummaryWord in caseSummary.CaseSummaryWords)
         {
@@ -59,7 +58,7 @@ public class CaseSummaryRepository(SummeringsMakkerDbContext context) : ICaseSum
         context.SaveChanges();
     }
 
-    public void UpdateCaseSummary(CaseSummary caseSummary)
+    public void UpdateCaseSummary(CaseSummary? caseSummary)
     {
         context.CaseSummaries.Update(caseSummary);
         context.SaveChanges();

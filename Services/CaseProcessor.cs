@@ -35,7 +35,6 @@ public class CaseProcessor
 
     public async Task<CaseSummary> ProcessFile(Case caseItem)
     {
-
         var caseSummary = new CaseSummary
         {
             CaseSummaryId = caseItem.Id
@@ -68,7 +67,8 @@ public class CaseProcessor
                 new
                 {
                     role = "user",
-                    content ="Redact personal data from the provided text string using the following tokens: Replace names with 'person'. Replace dates with 'date'. Replace locations with 'location'. Replace organization names with 'organization'. Replace unique identifiers with 'identifier'. Replace any other personal information tokens with 'personal_info'. Replace descriptors for types of persons (e.g., 'plaintiff', 'defendant') with 'person_type'. Ensure that the redacted text maintains readability and preserves the essential legal context of the document."
+                    content =
+                        "Redact personal data from the provided text string using the following tokens: Replace names with 'person'. Replace dates with 'date'. Replace locations with 'location'. Replace organization names with 'organization'. Replace unique identifiers with 'identifier'. Replace any other personal information tokens with 'personal_info'. Replace descriptors for types of persons (e.g., 'plaintiff', 'defendant') with 'person_type'. Ensure that the redacted text maintains readability and preserves the essential legal context of the document."
                 },
                 new { role = "user", content = text }
             },
@@ -83,9 +83,6 @@ public class CaseProcessor
         string textAnonymized = (string)responseObj.choices[0].message.content;
         return textAnonymized;
     }
-
-
-
 
     private async Task AnalyzeText(CaseSummary viewModel, string text)
     {
@@ -161,7 +158,7 @@ public class CaseProcessor
 
                 var word = _context.Words.FirstOrDefault(w => w.Text == wordsPart) ?? new Word { Text = wordsPart };
                 var caseSummaryWord = new CaseSummaryWord
-                { Word = word, CaseSummary = viewModel, Frequency = frequencyPart };
+                    { Word = word, CaseSummary = viewModel, Frequency = frequencyPart };
 
                 viewModel.CaseSummaryWords.Add(caseSummaryWord);
                 word.CaseSummaryWords.Add(caseSummaryWord);
@@ -175,7 +172,12 @@ public class CaseProcessor
         {
             messages = new List<object>
             {
-                new { role = "system", content = "Generate a sequence Mermaid diagram from the flow in the following text. Do not add reminders or other unnecessary text" },
+                new
+                {
+                    role = "system",
+                    content =
+                        "Generate a sequence Mermaid diagram from the flow in the following text. Do not add reminders or other unnecessary text"
+                },
                 new { role = "user", content = text }
             },
             temperature = TEMPERATURE,
@@ -197,7 +199,12 @@ public class CaseProcessor
         {
             messages = new List<object>
             {
-                new { role = "system", content = "Identify and list all legal references in the text provided and return them exactly as you found them with no diviation." },
+                new
+                {
+                    role = "system",
+                    content =
+                        "Identify and list all legal references in the text provided and return them exactly as you found them with no diviation."
+                },
                 new { role = "user", content = text }
             },
             temperature = TEMPERATURE,
@@ -220,7 +227,7 @@ public class CaseProcessor
             {
                 var legalReference = new LegalReference { Text = reference };
                 var caseSummaryLegalReference = new CaseSummaryLegalReference
-                { LegalReference = legalReference, CaseSummary = viewModel };
+                    { LegalReference = legalReference, CaseSummary = viewModel };
 
                 //the following line is for the DB, creating another entity (join table reference) this is done using pointers
                 legalReference.CaseSummaryLegalReferences.Add(caseSummaryLegalReference);
@@ -229,7 +236,7 @@ public class CaseProcessor
         }
     }
 
-    public static async Task<string> SendRequestToAI(string jsonContent, HttpClient httpClient) 
+    public static async Task<string> SendRequestToAI(string jsonContent, HttpClient httpClient)
     {
         var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
         var response = await httpClient.PostAsync(GPT4V_ENDPOINT, content);
@@ -245,7 +252,6 @@ public class CaseProcessor
         }
     }
 }
-
 
 class Message
 {

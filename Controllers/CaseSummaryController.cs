@@ -84,6 +84,9 @@ namespace summeringsmakker.Controllers
                     .ToList();
 
                 var truthTableResult = await _checker.TruthTable(legalReferences);
+                
+                caseList.ForEach(cs => cs.LastChecked = DateTime.Now);
+                
 
                 var caseSummaryDtoList = caseList.Select(caseSummary => new CaseSummaryDTO
                 {
@@ -133,6 +136,8 @@ namespace summeringsmakker.Controllers
 
             // live check
             var truthTableResult = await _checker.TruthTable(legalReferences);
+            
+            caseSummary.LastChecked = DateTime.Now;
 
             var caseSummaryDto = new CaseSummaryDTO
             {

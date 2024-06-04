@@ -9,6 +9,8 @@ public class CaseSummary
     public List<CaseSummaryWord> CaseSummaryWords { get; set; }
     public List<CaseSummaryLegalReference> CaseSummaryLegalReferences { get; set; }
     
+    public DateTime LastChecked { get; set; }
+    
     public CaseSummary()
     {
         CaseSummaryWords = new List<CaseSummaryWord>();

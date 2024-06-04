@@ -8,7 +8,7 @@ public interface ICaseSummaryRepository
     void Add(List<CaseSummary> caseSummaries);
 
 
-    public CaseSummary GetById(int id);
+    public CaseSummary? GetById(int id);
     public List<CaseSummary> GetCaseSummaries();
-    public void AddCaseSummary(CaseSummary caseSummary);
+    public void AddCaseSummary(CaseSummary? caseSummary);
 }
