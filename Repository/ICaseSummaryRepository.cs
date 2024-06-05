@@ -11,4 +11,5 @@ public interface ICaseSummaryRepository
     public CaseSummary? GetById(int id);
     public List<CaseSummary> GetCaseSummaries();
     public void AddCaseSummary(CaseSummary? caseSummary);
+    public void Update(List<CaseSummary> caseSummary);
 }

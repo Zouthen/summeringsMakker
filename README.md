@@ -18,3 +18,6 @@ Step 1. In your operating system go to the services app Step
 4. Now test the connection to see if it works
 
 as a hail marry try and restart the program the DB and run the program
+
+# create new migration
+1. dotnet ef migrations add <migration name>

@@ -14,16 +14,16 @@ namespace summeringsmakker.Controllers
         private readonly ILogger<CaseSummaryController> _logger;
         private readonly ICaseRepository _caseRepository;
         private readonly ICaseSummaryRepository _caseSummaryRepository;
-        private readonly Checker _checker;
+        private readonly LegalReferenceValidator _legalReferenceValidator;
         private readonly CaseProcessor _caseProcessor;
 
         public CaseSummaryController(ILogger<CaseSummaryController> logger, ICaseRepository caseRepository,
-            ICaseSummaryRepository caseSummaryRepository, Checker checker, CaseProcessor caseProcessor)
+            ICaseSummaryRepository caseSummaryRepository, LegalReferenceValidator legalReferenceValidator, CaseProcessor caseProcessor)
         {
             _logger = logger;
             _caseRepository = caseRepository;
             _caseSummaryRepository = caseSummaryRepository;
-            _checker = checker;
+            _legalReferenceValidator = legalReferenceValidator;
             _caseProcessor = caseProcessor;
         }
 
@@ -83,7 +83,7 @@ namespace summeringsmakker.Controllers
                     .Distinct()
                     .ToList();
 
-                var truthTableResult = await _checker.TruthTable(legalReferences);
+                var truthTableResult = await _legalReferenceValidator.ValidateLegalReferences(legalReferences);
                 
                 caseList.ForEach(cs => cs.LastChecked = DateTime.Now);
                 
@@ -135,7 +135,7 @@ namespace summeringsmakker.Controllers
             .ToList();
 
             // live check
-            var truthTableResult = await _checker.TruthTable(legalReferences);
+            var truthTableResult = await _legalReferenceValidator.ValidateLegalReferences(legalReferences);
             
             caseSummary.LastChecked = DateTime.Now;
 
