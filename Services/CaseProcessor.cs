@@ -247,7 +247,7 @@ public class CaseProcessor
         var response = await httpClient.PostAsync(GPT4V_ENDPOINT, content);
 
         if (response.IsSuccessStatusCode)
-        ww
+        {
             return await response.Content.ReadAsStringAsync();
         }
         else
