@@ -1,5 +1,6 @@
 ﻿using summeringsmakker.Models;
 using summeringsmakker.Data;
+using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using summeringsMakker.Repository;
 
@@ -73,27 +74,36 @@ public class CaseSummaryRepository(SummeringsMakkerDbContext context) : ICaseSum
             context.SaveChanges();
         }
     }
-
-    public HashSet<int> GetCaseSummariesIds(List<int> periodCaseIds)
+    
+    public HashSet<int> GetCaseIds(List<int> periodCaseIds)
     {
-        HashSet<int> Ids = new HashSet<int>();
-
-        periodCaseIds.ForEach(periodId => { Ids.Add(periodId); });
-
-        return Ids;
+        var ids = context.CaseSummaries
+                        .AsNoTracking()
+                        .Where(cs => periodCaseIds.Contains(cs.CaseId)) // Ensure cs.CaseId is the intended field
+                        .Select(cs => cs.CaseId) // This selects the CaseId from those filtered entries
+                        .ToHashSet();
+        return ids;
     }
+      /*
+    public HashSet<int> GetCaseIds(List<int> periodCaseIds)
+    {
+        // Parameterize the input to prevent SQL injection
+        var ids = context.CaseSummaries
+                        .FromSqlRaw("SELECT CaseId FROM CaseSummaries WHERE CaseId IN ({0})", periodCaseIds)
+                        .AsEnumerable()
+                        .ToHashSet();
+        return ids;
+    }
+*/
 
     public void Add(List<CaseSummary> caseSummaries)
     {
-        throw new NotImplementedException();
-    }
-    
-    public void Update(List<CaseSummary> caseSummaries)
-    {
-        foreach (var caseSummary in caseSummaries)
+        if (caseSummaries == null || !caseSummaries.Any())
         {
-            context.CaseSummaries.Update(caseSummary);
+            throw new ArgumentNullException(nameof(caseSummaries), "The list of case summaries cannot be null or empty.");
         }
+
+        context.CaseSummaries.AddRange(caseSummaries);
         context.SaveChanges();
     }
 }
