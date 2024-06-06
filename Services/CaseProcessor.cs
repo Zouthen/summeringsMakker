@@ -1,4 +1,4 @@
-﻿using summeringsmakker.Data;
+using summeringsmakker.Data;
 
 namespace summeringsMakker.Services;
 
@@ -9,6 +9,8 @@ using System.Text.RegularExpressions;
 using System.Text;
 using summeringsmakker.Models;
 using summeringsmakker.Services;
+
+
 
 public class CaseProcessor
 {
@@ -24,10 +26,11 @@ public class CaseProcessor
         httpClient = new HttpClient();
         httpClient.DefaultRequestHeaders.Add("api-key", GPT4V_KEY);
     }
-
     private const string GPT4V_ENDPOINT =
-        "https://ftfaopenaiswedentest.openai.azure.com/openai/deployments/FTFA-gpt-4-vision-preview/chat/completions?api-version=2023-07-01-preview";
+        "https://azureopenaitestsyl.openai.azure.com/openai/deployments/TeamHovedopgave/chat/completions?api-version=2024-02-15-preview";
 
+    //"https://ftfaopenaiswedentest.openai.azure.com/openai/deployments/FTFA-gpt-4-turbo-2024-04-09/chat/completions?api-version=2024-02-15-preview";
+    //"https://ftfaopenaiswedentest.openai.azure.com/openai/deployments/FTFA-gpt-4-vision-preview/chat/completions?api-version=2023-07-01-preview";
     private const double TEMPERATURE = 0.1;
     private const double TOP_P = 0.95;
     private const int MAX_TOKENS = 4096;
@@ -60,22 +63,21 @@ public class CaseProcessor
 
     private async Task<string> AnonymizeText(string text)
     {
+        var Messages = new List<object>
+        {
+            new { role = "system", content = "You are an AI that redacts personal information from text." },
+            new { role = "user", content = "Redact personal data from the provided text string using the following tokens: Replace names with 'person'. Replace dates with 'date'. Replace locations with 'location'. Replace organization names with 'organization'. Replace unique identifiers with 'identifier'. Replace any other personal information tokens with 'personal_info'. Replace descriptors for types of persons (e.g., 'plaintiff', 'defendant') with 'person_type'. Ensure that the redacted text maintains readability and preserves the essential legal context of the document." },
+            new { role = "user", content = text }
+        };
+
         var payload = new
         {
-            messages = new List<object>
-            {
-                new { role = "system", content = "You are an AI that redacts personal information from text." },
-                new
-                {
-                    role = "user",
-                    content ="Redact personal data from the provided text string using the following tokens: Replace names with 'person'. Replace dates with 'date'. Replace locations with 'location'. Replace organization names with 'organization'. Replace unique identifiers with 'identifier'. Replace any other personal information tokens with 'personal_info'. Replace descriptors for types of persons (e.g., 'plaintiff', 'defendant') with 'person_type'. Ensure that the redacted text maintains readability and preserves the essential legal context of the document."
-                },
-                new { role = "user", content = text }
-            },
+            messages = Messages,
             temperature = TEMPERATURE,
-            top_p = TOP_P,
             max_tokens = MAX_TOKENS,
-            stream = false
+            top_p = (float)TOP_P,
+            frequency_penalty = 0,
+            presence_penalty = 0
         };
 
         var response = await SendRequestToAI(JsonConvert.SerializeObject(payload), httpClient);
@@ -89,12 +91,11 @@ public class CaseProcessor
 
     private async Task AnalyzeText(CaseSummary viewModel, string text)
     {
-        messages.Add(new Message
+        var messages = new List<object>
         {
-            role = "system",
-            content = "Du er en AI der scanner juridiske dokumenter og udtrækker de vigtigste dele og du svare på dansk"
-        });
-        messages.Add(new Message { role = "user", content = "brug den juridiske metode når du analysere dokumenter" });
+            new { role = "system", content = "Du er en AI der scanner juridiske dokumenter og udtrækker de vigtigste dele og du svare på dansk" },
+            new { role = "user", content = "brug den juridiske metode når du analysere dokumenter" },
+        };
 
         await SendTextForSummary(viewModel, text);
         await AnalyzeWordFrequency(viewModel, text);
@@ -104,17 +105,20 @@ public class CaseProcessor
 
     private async Task SendTextForSummary(CaseSummary viewModel, string text)
     {
+        var Messages = new List<object>
+    {
+        new { role = "system", content = "Lav et resume af den givne tekst på dansk" },
+        new { role = "user", content = text }
+    };
+
         var payload = new
         {
-            messages = new List<object>
-            {
-                new { role = "system", content = "lav et resume af den givne text på dansk" },
-                new { role = "user", content = text }
-            },
+            messages = Messages,
             temperature = TEMPERATURE,
-            top_p = TOP_P,
-            max_tokens = 800,
-            stream = false
+            max_tokens = MAX_TOKENS,
+            top_p = (float)TOP_P,
+            frequency_penalty = 0,
+            presence_penalty = 0
         };
 
         var response = await SendRequestToAI(JsonConvert.SerializeObject(payload), httpClient);
@@ -124,25 +128,25 @@ public class CaseProcessor
         viewModel.Summary = tempSummary.Replace("Resume:", "").Trim();
     }
 
+
     private async Task AnalyzeWordFrequency(CaseSummary viewModel, string text)
     {
+        var Messages = new List<object>
+    {
+        new { role = "system", content = "Identificer de 10 vigtigste ord i teksten og arranger dem efter deres hyppighed på følgende måde: ord - hyppighed." },
+        new { role = "user", content = text }
+    };
+
         var payload = new
         {
-            messages = new List<object>
-            {
-                new
-                {
-                    role = "system",
-                    content =
-                        "identificer de 10 vigtigste ord i teksten og arranger dem efter deres hyppighed på følgende måde: ord - hyppighed."
-                },
-                new { role = "user", content = text }
-            },
+            messages = Messages,
             temperature = TEMPERATURE,
-            top_p = TOP_P,
-            max_tokens = 200,
-            stream = false
+            max_tokens = MAX_TOKENS,
+            top_p = (float)TOP_P,
+            frequency_penalty = 0,
+            presence_penalty = 0
         };
+
         var response = await SendRequestToAI(JsonConvert.SerializeObject(payload), httpClient);
         Console.WriteLine("Word Frequencies: " + response);
         dynamic responseObj = JsonConvert.DeserializeObject(response);
@@ -171,20 +175,24 @@ public class CaseProcessor
 
     private async Task GenerateMermaidDiagram(CaseSummary viewModel, string text)
     {
-        var payload = new
+        var Messages = new List<object>
         {
-            messages = new List<object>
-            {
-                new { role = "system", content = "Generate a sequence Mermaid diagram from the flow in the following text. Do not add reminders or other unnecessary text" },
-                new { role = "user", content = text }
-            },
-            temperature = TEMPERATURE,
-            top_p = TOP_P,
-            max_tokens = 1000,
-            stream = false
+            new { role = "system", content = "Generate a sequence Mermaid diagram from the flow in the following text. Do not add reminders or other unnecessary text" },
+            new { role = "user", content = text }
         };
 
-        var response = await SendRequestToAI(JsonConvert.SerializeObject(payload), httpClient);
+        var payload = new
+        {
+            messages = Messages,
+            temperature = TEMPERATURE,
+            max_tokens = MAX_TOKENS,
+            top_p = (float)TOP_P,
+            frequency_penalty = 0,
+            presence_penalty = 0
+        };
+
+        var jsonContent = JsonConvert.SerializeObject(payload);
+        var response = await SendRequestToAI(jsonContent, httpClient);
         Console.WriteLine("Mermaid Diagram: " + response);
         dynamic responseObj = JsonConvert.DeserializeObject(response);
         string mermaidTemp = (string)responseObj.choices[0].message.content;
@@ -193,17 +201,20 @@ public class CaseProcessor
 
     private async Task FindLegalReferences(CaseSummary viewModel, string text)
     {
+        var Messages = new List<object>
+        {
+            new { role = "system", content = "Identify and list all legal references in the text provided and return them exactly as you found them with no deviation." },
+            new { role = "user", content = text }
+        };
+
         var payload = new
         {
-            messages = new List<object>
-            {
-                new { role = "system", content = "Identify and list all legal references in the text provided and return them exactly as you found them with no diviation." },
-                new { role = "user", content = text }
-            },
+            messages = Messages,
             temperature = TEMPERATURE,
-            top_p = TOP_P,
-            max_tokens = 1000,
-            stream = false
+            max_tokens = MAX_TOKENS,
+            top_p = (float)TOP_P,
+            frequency_penalty = 0,
+            presence_penalty = 0
         };
 
 

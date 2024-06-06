@@ -1,0 +1,223 @@
+﻿using Azure;
+using Azure.AI.OpenAI;
+using summeringsmakker.Data;
+using Newtonsoft.Json;
+using System.Collections.Generic;
+using System.IO;
+using System.Text.RegularExpressions;
+using System.Text;
+using summeringsmakker.Models;
+using summeringsmakker.Services;
+using System.Threading.Tasks;
+using System;
+
+
+public class CaseProcessor
+{
+    
+
+    private readonly SummeringsMakkerDbContext _context;
+    private readonly OpenAIClient _openAiClient;
+
+    public CaseProcessor(SummeringsMakkerDbContext context)
+    {
+        var GPT4V_KEY = File.ReadAllText("EnvVariables/gpt4v_key").Trim();
+
+        _context = context;
+        _openAiClient = new OpenAIClient(
+            new Uri("https://ftfaopenaisweden.openai.azure.com/"),
+            new AzureKeyCredential(GPT4V_KEY)
+        );
+    }
+
+    private const double TEMPERATURE = 0.1;
+    private const double TOP_P = 0.95;
+    private const int MAX_TOKENS = 4096;
+
+    public async Task<CaseSummary> ProcessFile(Case caseItem)
+    {
+        var caseSummary = new CaseSummary
+        {
+            CaseId = caseItem.Id
+        };
+        string text = caseItem.Content;
+
+        try
+        {
+            // Anonymize text
+            string anonymizedText = await AnonymizeText(text);
+            // Analyze text
+            await AnalyzeText(caseSummary, anonymizedText);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred while processing case {caseItem.Id}: {ex.Message}");
+            throw; // Re-throw the exception to handle it further up the call stack if needed
+        }
+
+        return caseSummary;
+    }
+
+    private async Task<string> AnonymizeText(string text)
+    {
+        var messages = new List<ChatMessage>
+        {
+            new ChatMessage(ChatRole.System, "You are an AI that redacts personal information from text."),
+            new ChatMessage(ChatRole.User, "Redact personal data from the provided text string using the following tokens: Replace names with 'person'. Replace dates with 'date'. Replace locations with 'location'. Replace organization names with 'organization'. Replace unique identifiers with 'identifier'. Replace any other personal information tokens with 'personal_info'. Replace descriptors for types of persons (e.g., 'plaintiff', 'defendant') with 'person_type'. Ensure that the redacted text maintains readability and preserves the essential legal context of the document."),
+            new ChatMessage(ChatRole.User, text)
+        };
+
+        var options = new ChatCompletionsOptions
+        {
+            Messages = messages,
+            Temperature = (float)TEMPERATURE,
+            MaxTokens = MAX_TOKENS,
+            NucleusSamplingFactor = (float)TOP_P,
+            FrequencyPenalty = 0,
+            PresencePenalty = 0
+        };
+
+        Response<ChatCompletions> response = await _openAiClient.GetChatCompletionsAsync("FTFA-gpt-4-1106-Preview", options);
+        string textAnonymized = response.Value.Choices[0].Message.Content;
+        return textAnonymized;
+    }
+
+    private async Task AnalyzeText(CaseSummary viewModel, string text)
+    {
+        var messages = new List<ChatMessage>
+        {
+            new ChatMessage(ChatRole.System, "Du er en AI der scanner juridiske dokumenter og udtrækker de vigtigste dele og du svare på dansk"),
+            new ChatMessage(ChatRole.User, "brug den juridiske metode når du analysere dokumenter")
+        };
+
+        await SendTextForSummary(viewModel, text);
+        await AnalyzeWordFrequency(viewModel, text);
+        await GenerateMermaidDiagram(viewModel, text);
+        await FindLegalReferences(viewModel, text);
+    }
+
+    private async Task SendTextForSummary(CaseSummary viewModel, string text)
+    {
+        var messages = new List<ChatMessage>
+        {
+            new ChatMessage(ChatRole.System, "lav et resume af den givne text på dansk"),
+            new ChatMessage(ChatRole.User, text)
+        };
+
+        var options = new ChatCompletionsOptions
+        {
+            Messages = messages,
+            Temperature = (float)TEMPERATURE,
+            MaxTokens = 800,
+            NucleusSamplingFactor = (float)TOP_P,
+            FrequencyPenalty = 0,
+            PresencePenalty = 0
+        };
+
+        Response<ChatCompletions> response = await _openAiClient.GetChatCompletionsAsync("FTFA-gpt-4-1106-Preview", options);
+        string tempSummary = response.Value.Choices[0].Message.Content;
+        viewModel.Summary = tempSummary.Replace("Resume:", "").Trim();
+    }
+
+    private async Task AnalyzeWordFrequency(CaseSummary viewModel, string text)
+    {
+        var messages = new List<ChatMessage>
+        {
+            new ChatMessage(ChatRole.System, "identificer de 10 vigtigste ord i teksten og arranger dem efter deres hyppighed på følgende måde: ord - hyppighed."),
+            new ChatMessage(ChatRole.User, text)
+        };
+
+        var options = new ChatCompletionsOptions
+        {
+            Messages = messages,
+            Temperature = (float)TEMPERATURE,
+            MaxTokens = 200,
+            NucleusSamplingFactor = (float)TOP_P,
+            FrequencyPenalty = 0,
+            PresencePenalty = 0
+        };
+
+        Response<ChatCompletions> response = await _openAiClient.GetChatCompletionsAsync("FTFA-gpt-4-1106-Preview", options);
+        string wordFrequencies = response.Value.Choices[0].Message.Content;
+
+        string[] lines = wordFrequencies.Split('\n');
+
+        foreach (string line in lines)
+        {
+            var parts = line.Split(new[] { " - " }, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 2)
+            {
+                string wordsPart = parts[0].Replace("-", "").Trim();
+                wordsPart = wordsPart.Substring(wordsPart.IndexOf('.') + 1).Trim(); // Remove the numbering.
+                int frequencyPart = int.Parse(parts[1].Trim());
+
+                var word = _context.Words.FirstOrDefault(w => w.Text == wordsPart) ?? new Word { Text = wordsPart };
+                var caseSummaryWord = new CaseSummaryWord
+                { Word = word, CaseSummary = viewModel, Frequency = frequencyPart };
+
+                viewModel.CaseSummaryWords.Add(caseSummaryWord);
+                word.CaseSummaryWords.Add(caseSummaryWord);
+            }
+        }
+    }
+
+    private async Task GenerateMermaidDiagram(CaseSummary viewModel, string text)
+    {
+        var messages = new List<ChatMessage>
+        {
+            new ChatMessage(ChatRole.System, "Generate a sequence Mermaid diagram from the flow in the following text. Do not add reminders or other unnecessary text"),
+            new ChatMessage(ChatRole.User, text)
+        };
+
+        var options = new ChatCompletionsOptions
+        {
+            Messages = messages,
+            Temperature = (float)TEMPERATURE,
+            MaxTokens = 1000,
+            NucleusSamplingFactor = (float)TOP_P,
+            FrequencyPenalty = 0,
+            PresencePenalty = 0
+        };
+
+        Response<ChatCompletions> response = await _openAiClient.GetChatCompletionsAsync("FTFA-gpt-4-1106-Preview", options);
+        string mermaidTemp = response.Value.Choices[0].Message.Content;
+        viewModel.MermaidCode = mermaidTemp.Replace("```mermaid", "").Replace("```", "").Replace("(EF)", "EF").Trim();
+    }
+
+    private async Task FindLegalReferences(CaseSummary viewModel, string text)
+    {
+        var messages = new List<ChatMessage>
+        {
+            new ChatMessage(ChatRole.System, "Identify and list all legal references in the text provided and return them exactly as you found them with no deviation."),
+            new ChatMessage(ChatRole.User, text)
+        };
+
+        var options = new ChatCompletionsOptions
+        {
+            Messages = messages,
+            Temperature = (float)TEMPERATURE,
+            MaxTokens = 1000,
+            NucleusSamplingFactor = (float)TOP_P,
+            FrequencyPenalty = 0,
+            PresencePenalty = 0
+        };
+
+        Response<ChatCompletions> response = await _openAiClient.GetChatCompletionsAsync("FTFA-gpt-4-1106-Preview", options);
+        string legalReferences = response.Value.Choices[0].Message.Content;
+
+        if (!string.IsNullOrEmpty(legalReferences))
+        {
+            var references = legalReferences.Split('\n').Select(s => s.Trim()).ToList();
+            foreach (var reference in references)
+            {
+                var legalReference = new LegalReference { Text = reference };
+                var caseSummaryLegalReference = new CaseSummaryLegalReference
+                { LegalReference = legalReference, CaseSummary = viewModel };
+
+                // The following line is for the DB, creating another entity (join table reference) this is done using pointers
+                legalReference.CaseSummaryLegalReferences.Add(caseSummaryLegalReference);
+                viewModel.CaseSummaryLegalReferences.Add(caseSummaryLegalReference);
+            }
+        }
+    }
+}
