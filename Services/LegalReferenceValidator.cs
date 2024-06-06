@@ -1,3 +1,5 @@
+using System.Net;
+using System.Text;
 using Azure;
 using Azure.AI.OpenAI;
 using summeringsmakker.Data;
@@ -18,16 +20,15 @@ public class LegalReferenceValidator
         _context = context;
 
         var GPT4V_KEY = File.ReadAllText("EnvVariables/gpt4v_key").Trim();
-        httpClient = new HttpClient();
+        httpClient = new HttpClient
+        {
+            Timeout = TimeSpan.FromMinutes(10) // Set timeout to 5 minutes
+        };
         httpClient.DefaultRequestHeaders.Add("api-key", GPT4V_KEY);
-
-        client = new OpenAIClient(
-            new Uri("https://ftfaopenaisweden.openai.azure.com/"),
-            new AzureKeyCredential(GPT4V_KEY));
     }
 
     private const string GPT4V_ENDPOINT =
-        "https://ftfaopenaiswedentest.openai.azure.com/openai/deployments/FTFA-gpt-4-vision-preview/chat/completions?api-version=2023-07-01-preview";
+        "https://azureopenaitestsyl.openai.azure.com/openai/deployments/TeamHovedopgave/chat/completions?api-version=2024-02-15-preview";
 
     private const double TEMPERATURE = 0.1;
     private const double TOP_P = 0.95;
@@ -56,8 +57,7 @@ public class LegalReferenceValidator
                     content =
                         "Du er et nøjagtig juridisk validerings program der modtager en liste af juridiske henvisninger med id for hver, hvor du skal sammenligne disse juridiske henvisninger med et juridisk dokument og returnere en csv fil med svar på spørgsmål besvaret ved at sammenligne det juridisk dokument med hver juridisk henvisning."
                 },
-                new { role = "user", content = "juridiske dokument:" },
-                new { role = "assistant", content = legalDocument },
+                new { role = "user", content = $"juridiske dokument:" + legalDocument },
                 new
                 {
                     role = "user",
@@ -77,44 +77,73 @@ public class LegalReferenceValidator
         };
 
         // Send request to AI and parse response
-        var response = await CaseProcessor.SendRequestToAI(JsonConvert.SerializeObject(payload), httpClient);
-        dynamic responseObj = JsonConvert.DeserializeObject(response);
-
-
-        // Process each result from the AI response
-        var legalReferenceStatus = ParseLegalReferenceStatus(responseObj["completions"][0]["data"]["text"].ToString());
-        for (int i = 0; i < legalReferences.Count; i++)
+        try
         {
-            var legalReference = legalReferences[i];
-            if (legalReferenceStatus.TryGetValue(i, out (bool IsActual, bool IsInEffect) status))
+            var response = await SendRequestToAi(JsonConvert.SerializeObject(payload), httpClient);
+            Console.Write("123123");
+            dynamic responseObj = JsonConvert.DeserializeObject(response);
+
+            // Process each result from the AI response
+            var legalReferenceStatus =
+                ParseLegalReferenceStatus(responseObj["completions"][0]["data"]["text"].ToString());
+            for (int i = 0; i < legalReferences.Count; i++)
             {
-                legalReference.IsActual = status.IsActual;
-                legalReference.IsInEffect = status.IsInEffect;
+                var legalReference = legalReferences[i];
+                if (legalReferenceStatus.TryGetValue(i, out (bool IsActual, bool IsInEffect) status))
+                {
+                    legalReference.IsActual = status.IsActual;
+                    legalReference.IsInEffect = status.IsInEffect;
+                }
+                else
+                {
+                    legalReference.IsActual = false;
+                    legalReference.IsInEffect = false;
+                }
+            }
+
+
+            return legalReferences;
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
+    }
+    
+    public static async Task<string> SendRequestToAi(string jsonContent, HttpClient httpClient)
+    {
+        if (jsonContent == null)
+        {
+            Console.WriteLine("jsonContent is null");
+            return null;
+        }
+
+        try
+        {
+            var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+            var response = await httpClient.PostAsync(GPT4V_ENDPOINT, content);
+
+            // Get the HTTP status code
+            HttpStatusCode statusCode = response.StatusCode;
+            Console.WriteLine($"HTTP Status Code: {statusCode}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadAsStringAsync();
             }
             else
             {
-                legalReference.IsActual = false;
-                legalReference.IsInEffect = false;
+                Console.WriteLine($"Failed to send payload. Status code: {response.StatusCode}.");
+                return null;
             }
         }
-
-
-        return legalReferences;
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred: {ex.Message}");
+            return null;
+        }
     }
-
-    public async Task<string> SendRequestToAi(string jsonContent)
-    {
-        var payload = JsonConvert.DeserializeObject<ChatCompletionsOptions>(jsonContent);
-
-        Response<ChatCompletions> responseWithoutStream = await client.GetChatCompletionsAsync(
-            payload
-        );
-
-        ChatCompletions response = responseWithoutStream.Value;
-
-        return JsonConvert.SerializeObject(response);
-    }
-
     public async Task<CaseSummary> ValidateCaseSummaryLegalReferences(CaseSummary caseSummary)
     {
         var legalReferences = caseSummary.GetLegalReferences();
