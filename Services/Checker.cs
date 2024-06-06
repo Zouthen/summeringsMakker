@@ -25,9 +25,6 @@ public class Checker
 
     private const string GPT4V_ENDPOINT = "https://azureopenaitestsyl.openai.azure.com/openai/deployments/TeamHovedopgave/chat/completions?api-version=2024-02-15-preview";
 
-    //"https://ftfaopenaiswedentest.openai.azure.com/openai/deployments/FTFA-gpt-4-turbo-2024-04-09/chat/completions?api-version=2024-02-15-preview";
-    //"https://ftfaopenaiswedentest.openai.azure.com/openai/deployments/FTFA-gpt-4-vision-preview/chat/completions?api-version=2023-07-01-preview";
-
     private const double TEMPERATURE = 0.1;
     private const double TOP_P = 0.95;
     private const int MAX_TOKENS = 4096;

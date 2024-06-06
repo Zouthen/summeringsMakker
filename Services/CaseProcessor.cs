@@ -23,14 +23,15 @@ public class CaseProcessor
         _context = context;
 
         var GPT4V_KEY = File.ReadAllText("EnvVariables/gpt4v_key").Trim();
-        httpClient = new HttpClient();
+        httpClient = new HttpClient
+        {
+            Timeout = TimeSpan.FromMinutes(10) // Set timeout to 5 minutes
+        };
         httpClient.DefaultRequestHeaders.Add("api-key", GPT4V_KEY);
     }
     private const string GPT4V_ENDPOINT =
         "https://azureopenaitestsyl.openai.azure.com/openai/deployments/TeamHovedopgave/chat/completions?api-version=2024-02-15-preview";
-
-    //"https://ftfaopenaiswedentest.openai.azure.com/openai/deployments/FTFA-gpt-4-turbo-2024-04-09/chat/completions?api-version=2024-02-15-preview";
-    //"https://ftfaopenaiswedentest.openai.azure.com/openai/deployments/FTFA-gpt-4-vision-preview/chat/completions?api-version=2023-07-01-preview";
+        
     private const double TEMPERATURE = 0.1;
     private const double TOP_P = 0.95;
     private const int MAX_TOKENS = 4096;
@@ -246,7 +247,7 @@ public class CaseProcessor
         var response = await httpClient.PostAsync(GPT4V_ENDPOINT, content);
 
         if (response.IsSuccessStatusCode)
-        {
+        ww
             return await response.Content.ReadAsStringAsync();
         }
         else
