@@ -90,6 +90,12 @@ namespace summeringsMakker.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("LegalReferenceId"));
 
+                    b.Property<bool>("IsActual")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsInEffect")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<string>("Text")
                         .IsRequired()
                         .HasColumnType("longtext");

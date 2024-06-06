@@ -25,7 +25,7 @@ namespace summeringsmakker.Controllers
 
             // Validate legal references
             caseSummaries.ForEach(cs =>
-                _ = legalReferenceValidator.ValidateCaseSummaryLegalReference(cs));
+                _ = legalReferenceValidator.ValidateCaseSummaryLegalReferences(cs));
 
             // Update database
             caseSummaryRepository.Update(caseSummaries);
