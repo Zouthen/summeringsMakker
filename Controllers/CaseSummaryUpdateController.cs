@@ -15,10 +15,9 @@ namespace summeringsmakker.Controllers
         
         // POST: CaseSummaryUpdateController/UpdateLastChecked
         [HttpPost]
-        public async Task<IActionResult> UpdateLastChecked()
+        public async Task<IActionResult> UpdateLastChecked(DateTime? date)
         {
-            // var dateToCheck = date ?? DateTime.Now;
-            var dateToCheck = DateTime.Now;
+            var dateToCheck = date ?? DateTime.Now;
 
             var caseSummaries = caseSummaryRepository.GetCaseSummaries()
                 .Where(cs => cs.LastChecked < dateToCheck).ToList();

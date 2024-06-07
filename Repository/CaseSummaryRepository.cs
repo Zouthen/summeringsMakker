@@ -36,7 +36,8 @@ public class CaseSummaryRepository(SummeringsMakkerDbContext context) : ICaseSum
 
     public void Update(List<CaseSummary> caseSummary)
     {
-        throw new NotImplementedException();
+        context.CaseSummaries.UpdateRange(caseSummary);
+        context.SaveChanges();
     }
 
     public void AddCaseSummaryWithReferences(CaseSummary? caseSummary)
