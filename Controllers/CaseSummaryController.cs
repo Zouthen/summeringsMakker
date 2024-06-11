@@ -133,16 +133,6 @@ namespace summeringsmakker.Controllers
                 return NotFound();
             }
 
-            var legalReferences = caseSummary.CaseSummaryLegalReferences
-            .Select(cslr => cslr.LegalReference.Text)
-            .Distinct()
-            .ToList();
-
-            // live check
-            var truthTableResult = await _legalReferenceValidator.ValidateLegalReferences(legalReferences);
-            
-            caseSummary.LastChecked = DateTime.Now;
-
             var caseSummaryDto = new CaseSummaryDTO
             {
                 CaseSummaryId = caseSummary.CaseSummaryId,
