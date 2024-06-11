@@ -25,7 +25,7 @@ public class LegalReferenceValidator
         _context = context;
         _caseRepository = caseRepository;
 
-        var GPT4V_KEY = File.ReadAllText("EnvVariables/gpt4v_key").Trim();
+        var GPT4V_KEY = Environment.GetEnvironmentVariable("AI_KEY");
         httpClient = new HttpClient
         {
             Timeout = TimeSpan.FromMinutes(10) // timeout
