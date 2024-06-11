@@ -56,6 +56,9 @@
             var table = $('#caseGrid').DataTable({
                 "processing": true,
                 "serverSide": true,
+                "filter": true,
+                "orderMulti": false,
+                "pageLength": 10,
                 "ajax": {
                     "url": "/CaseSummary/LoadCases",
                     "type": "POST",
