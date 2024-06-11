@@ -42,6 +42,11 @@ public class CaseSummaryRepository(SummeringsMakkerDbContext context) : ICaseSum
 
     public void AddCaseSummaryWithReferences(CaseSummary? caseSummary)
     {
+        if(caseSummary == null)
+        {
+            return;
+        }
+        
         foreach (var caseSummaryWord in caseSummary.CaseSummaryWords)
         {
             var word = context.Words.FirstOrDefault(w => w.Text == caseSummaryWord.Word.Text);
@@ -67,6 +72,11 @@ public class CaseSummaryRepository(SummeringsMakkerDbContext context) : ICaseSum
 
     public void UpdateCaseSummary(CaseSummary? caseSummary)
     {
+        if(caseSummary == null)
+        {
+            return;
+        }
+        
         context.CaseSummaries.Update(caseSummary);
         context.SaveChanges();
     }
@@ -90,23 +100,12 @@ public class CaseSummaryRepository(SummeringsMakkerDbContext context) : ICaseSum
                         .ToHashSet();
         return ids;
     }
-      /*
-    public HashSet<int> GetCaseIds(List<int> periodCaseIds)
-    {
-        // Parameterize the input to prevent SQL injection
-        var ids = context.CaseSummaries
-                        .FromSqlRaw("SELECT CaseId FROM CaseSummaries WHERE CaseId IN ({0})", periodCaseIds)
-                        .AsEnumerable()
-                        .ToHashSet();
-        return ids;
-    }
-*/
 
-    public void Add(List<CaseSummary> caseSummaries)
+    public void Add(List<CaseSummary>? caseSummaries)
     {
         if (caseSummaries == null || !caseSummaries.Any())
         {
-            throw new ArgumentNullException(nameof(caseSummaries), "The list of case summaries cannot be null or empty.");
+            return;
         }
 
         context.CaseSummaries.AddRange(caseSummaries);

@@ -13,19 +13,12 @@ namespace summeringsmakker.Controllers
 {
     [ApiController]
     [Route("cron")]
-    public class CronCaseController : ControllerBase
+    public class CronCaseController(
+        ICaseRepository caseRepository,
+        ICaseSummaryRepository caseSummaryRepository,
+        CaseProcessor caseProcessor)
+        : ControllerBase
     {
-        private readonly ICaseRepository _caseRepository;
-        private readonly ICaseSummaryRepository _caseSummaryRepository;
-        private readonly CaseProcessor _caseProcessor;
-
-        public CronCaseController(ICaseRepository caseRepository, ICaseSummaryRepository caseSummaryRepository, CaseProcessor caseProcessor)
-        {
-            _caseRepository = caseRepository;
-            _caseSummaryRepository = caseSummaryRepository;
-            _caseProcessor = caseProcessor;
-        }
-        
         [HttpPost("create-case-summaries")]
         public async Task<IActionResult> CreateCaseSummaries()
         {
@@ -34,13 +27,13 @@ namespace summeringsmakker.Controllers
             DateTime endOfDay = startOfDay.AddDays(1).AddTicks(-1);
 
             // Fetch all cases for the current day from the data warehouse
-            var casesForPeriod = _caseRepository.GetAll(startOfDay, endOfDay);
+            var casesForPeriod = caseRepository.GetAll(startOfDay, endOfDay);
 
             // Extract the IDs of the fetched cases
             var caseIdsForPeriod = casesForPeriod.Select(c => c.Id).ToList();
 
             // Get the IDs of the case summaries that already exist
-            var existingCaseIds = _caseSummaryRepository.GetCaseIds(caseIdsForPeriod);
+            var existingCaseIds = caseSummaryRepository.GetCaseIds(caseIdsForPeriod);
 
             // Filter out the cases that already have summaries
             var casesWithoutSummaries = casesForPeriod
@@ -53,12 +46,12 @@ namespace summeringsmakker.Controllers
             foreach (var caseWithoutSummary in casesWithoutSummaries)
             {
                 
-                var caseSummary = await _caseProcessor.ProcessFile(caseWithoutSummary);
+                var caseSummary = await caseProcessor.ProcessFile(caseWithoutSummary);
                 caseSummaries.Add(caseSummary);
             }
 
             // add to database
-            _caseSummaryRepository.Add(caseSummaries);
+            caseSummaryRepository.Add(caseSummaries);
 
             return RedirectToAction("Index", "CaseSummary");
         }

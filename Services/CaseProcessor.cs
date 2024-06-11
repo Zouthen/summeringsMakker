@@ -5,17 +5,13 @@ namespace summeringsMakker.Services;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.IO;
-using System.Text.RegularExpressions;
 using System.Text;
 using summeringsmakker.Models;
-using summeringsmakker.Services;
-
-
 
 public class CaseProcessor
 {
-    private readonly HttpClient httpClient = new HttpClient();
-    private List<Message> messages = new List<Message>();
+    private readonly HttpClient httpClient;
+    private List<Message> _messages = new List<Message>();
     private readonly SummeringsMakkerDbContext _context;
 
     public CaseProcessor(SummeringsMakkerDbContext context)
