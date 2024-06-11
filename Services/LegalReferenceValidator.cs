@@ -66,7 +66,7 @@ public class LegalReferenceValidator
                 {
                     role = "system",
                     content =
-                        "Du er et nøjagtig juridisk validerings program der modtager en liste af juridiske henvisninger med id for hver, hvor du skal sammenligne disse juridiske henvisninger med et juridisk dokument og returnere en csv fil med svar på spørgsmål besvaret ved at sammenligne det juridisk dokument med hver juridisk henvisning."
+                        "Du er et nÃ¸jagtig juridisk validerings program der modtager en liste af juridiske henvisninger med id for hver, hvor du skal sammenligne disse juridiske henvisninger med et juridisk dokument og returnere en csv fil med svar pÃ¥ spÃ¸rgsmÃ¥l besvaret ved at sammenligne det juridisk dokument med hver juridisk henvisning."
                 },
                 new { role = "user", content = $"juridiske dokument:" + legalDocument },
                 new
@@ -74,11 +74,11 @@ public class LegalReferenceValidator
                     role = "user",
                     content =
                         $@"Listen af juridiske henvisninger: [{formattedLegalReferencesList}]
-                For hver henvisning udfør følgende:
-                - IsActual: Valider om den givne henvisning optræder i det juridiske dokument.
-                - IsInEffect: Valider om henvisningen er ophørt. Dette gøres primært ved at tjekke om ordet 'ophørt' indgår.
+                For hver henvisning udfÃ¸r fÃ¸lgende:
+                - IsActual: Valider om den givne henvisning optrÃ¦der i det juridiske dokument.
+                - IsInEffect: Valider om henvisningen er ophÃ¸rt. Dette gÃ¸res primÃ¦rt ved at tjekke om ordet 'ophÃ¸rt' indgÃ¥r.
                 
-                Svaret skal være en CSV-liste med 'id, IsActual, IsInEffect;' for hver henvisning, hvor IsInEffect og IsActual er angivet som 'true' eller 'false'.
+                Svaret skal vÃ¦re en CSV-liste med 'id, IsActual, IsInEffect;' for hver henvisning, hvor IsInEffect og IsActual er angivet som 'true' eller 'false'.
 
                 Dette er den konkrete juridiske sag der behandles: {caseContext}"
                 }
