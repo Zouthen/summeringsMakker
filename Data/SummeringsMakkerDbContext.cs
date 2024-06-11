@@ -6,7 +6,7 @@ namespace summeringsmakker.Data;
 
 public class SummeringsMakkerDbContext : DbContext
 {
-    public DbSet<CaseSummary> CaseSummaries { get; set; }
+    public DbSet<CaseSummary?> CaseSummaries { get; set; }
     public DbSet<Word> Words { get; set; }
     public DbSet<CaseSummaryWord> CaseSummaryWords { get; set; }
     public DbSet<LegalReference> LegalReferences { get; set; }

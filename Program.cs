@@ -24,7 +24,7 @@ public class Program
         AddDatabaseContext(builder);
 
         // Register the Checker service
-        builder.Services.AddScoped<Checker>();
+        builder.Services.AddScoped<LegalReferenceValidator>();
 
         // Register your services
         builder.Services.AddScoped<CaseProcessor>();

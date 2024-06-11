@@ -8,11 +8,16 @@ namespace summeringsmakker.Repository;
 
 public class CaseSummaryRepository(SummeringsMakkerDbContext context) : ICaseSummaryRepository
 {
-    public CaseSummary GetCaseSummary(int id)
+    public CaseSummary? GetById(int id)
     {
-        return context.CaseSummaries.Find(id);
+        return context.CaseSummaries
+            .Include(cs => cs.CaseSummaryWords)
+            .ThenInclude(csw => csw.Word)
+            .Include(cs => cs.CaseSummaryLegalReferences)
+            .ThenInclude(cslr => cslr.LegalReference)
+            .FirstOrDefault(cs => cs.CaseSummaryId == id);
     }
-    
+
     public List<CaseSummary> GetCaseSummaries()
     {
         return context.CaseSummaries
@@ -23,13 +28,19 @@ public class CaseSummaryRepository(SummeringsMakkerDbContext context) : ICaseSum
             .ToList();
     }
 
-    public void AddCaseSummary(CaseSummary caseSummary)
+    public void AddCaseSummary(CaseSummary? caseSummary)
     {
         context.CaseSummaries.Add(caseSummary);
         context.SaveChanges();
     }
 
-    public void AddCaseSummaryWithReferences(CaseSummary caseSummary)
+    public void Update(List<CaseSummary> caseSummary)
+    {
+        context.CaseSummaries.UpdateRange(caseSummary);
+        context.SaveChanges();
+    }
+
+    public void AddCaseSummaryWithReferences(CaseSummary? caseSummary)
     {
         foreach (var caseSummaryWord in caseSummary.CaseSummaryWords)
         {
@@ -54,7 +65,7 @@ public class CaseSummaryRepository(SummeringsMakkerDbContext context) : ICaseSum
         context.SaveChanges();
     }
 
-    public void UpdateCaseSummary(CaseSummary caseSummary)
+    public void UpdateCaseSummary(CaseSummary? caseSummary)
     {
         context.CaseSummaries.Update(caseSummary);
         context.SaveChanges();
@@ -69,18 +80,36 @@ public class CaseSummaryRepository(SummeringsMakkerDbContext context) : ICaseSum
             context.SaveChanges();
         }
     }
-
-    public HashSet<string> GetCaseSummariesIds(List<string> periodCaseIds)
+    
+    public HashSet<int> GetCaseIds(List<int> periodCaseIds)
     {
-        HashSet<string> Ids = new HashSet<string>();
-
-        periodCaseIds.ForEach(periodId => { Ids.Add(periodId); });
-
-        return Ids;
+        var ids = context.CaseSummaries
+                        .AsNoTracking()
+                        .Where(cs => periodCaseIds.Contains(cs.CaseId)) // Ensure cs.CaseId is the intended field
+                        .Select(cs => cs.CaseId) // This selects the CaseId from those filtered entries
+                        .ToHashSet();
+        return ids;
     }
+      /*
+    public HashSet<int> GetCaseIds(List<int> periodCaseIds)
+    {
+        // Parameterize the input to prevent SQL injection
+        var ids = context.CaseSummaries
+                        .FromSqlRaw("SELECT CaseId FROM CaseSummaries WHERE CaseId IN ({0})", periodCaseIds)
+                        .AsEnumerable()
+                        .ToHashSet();
+        return ids;
+    }
+*/
 
     public void Add(List<CaseSummary> caseSummaries)
     {
-        throw new NotImplementedException();
+        if (caseSummaries == null || !caseSummaries.Any())
+        {
+            throw new ArgumentNullException(nameof(caseSummaries), "The list of case summaries cannot be null or empty.");
+        }
+
+        context.CaseSummaries.AddRange(caseSummaries);
+        context.SaveChanges();
     }
 }
