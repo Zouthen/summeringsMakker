@@ -22,7 +22,7 @@ public class LegalDocumentController(
     private readonly string _legalDocumentUrl = "https://www.retsinformation.dk/api/pdf/238690";
 
 
-    // POST: CaseSummaryUpdateController/UpdateLastChecked
+    // POST: LegalDocumentController/UpdateLastChecked
     [HttpPost]
     public async Task<IActionResult> UpdateLastChecked(DateTime? date)
     {
@@ -38,7 +38,7 @@ public class LegalDocumentController(
         // Update database
         caseSummaryRepository.Update(caseSummaries);
 
-        return Ok();
+        return RedirectToAction("Index", "Home");
     }
 
     [HttpPost]
@@ -71,7 +71,8 @@ public class LegalDocumentController(
             // Write the extracted text to legalDoc.txt
             await System.IO.File.WriteAllTextAsync(textFilePath, textBuilder.ToString());
             
-            return Ok("File saved successfully.");
+            //return Ok("File saved successfully.");
+            return RedirectToAction("Index", "Home");
         }
         else
         {

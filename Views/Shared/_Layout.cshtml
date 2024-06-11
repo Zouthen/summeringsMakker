@@ -8,6 +8,19 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/summeringsmakker.styles.css" asp-append-version="true" />
     @RenderSection("Styles", required: false)
+    <style>
+        .navbar-nav .nav-item {
+            margin-right: 10px;
+        }
+
+            .navbar-nav .nav-item:last-child {
+                margin-right: 0;
+            }
+
+        .nav-link.btn {
+            color: white;
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -21,11 +34,23 @@
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="CaseSummary" asp-action="Index">Cases</a>
+                            <form asp-area="" asp-controller="CaseSummary" asp-action="Index" method="get" class="d-inline">
+                                <button type="submit" class="nav-link btn btn-secondary text-white">Cases</button>
+                            </form>
                         </li>
                         <li class="nav-item">
                             <form asp-controller="CronCase" asp-action="CreateCaseSummaries" method="post" class="d-inline">
                                 <button type="submit" class="nav-link btn btn-primary text-white">CRON</button>
+                            </form>
+                        </li>
+                        <li class="nav-item">
+                            <form asp-controller="LegalDocument" asp-action="UpdateLastChecked" method="post" class="d-inline">
+                                <button type="submit" class="nav-link btn btn-primary text-white">Update Last Checked</button>
+                            </form>
+                        </li>
+                        <li class="nav-item">
+                            <form asp-controller="LegalDocument" asp-action="DownloadAndProcessLegalDocument" method="post" class="d-inline">
+                                <button type="submit" class="nav-link btn btn-primary text-white">Download and Process Legal Document</button>
                             </form>
                         </li>
                     </ul>
