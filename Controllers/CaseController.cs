@@ -10,7 +10,7 @@ namespace summeringsmakker.Controllers;
 public class CaseController(ICaseRepository caseRepository) : ControllerBase
 {
     [HttpGet("{id}")]
-    public ActionResult<int> ReadDocument(int id)
+    public ActionResult<int> GetCaseById(int id)
     {
         Case c = caseRepository.GetById(id);
         return Ok(c);
