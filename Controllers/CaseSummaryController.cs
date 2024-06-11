@@ -83,7 +83,7 @@ namespace summeringsmakker.Controllers
                     .Distinct()
                     .ToList();
 
-                var truthTableResult = await _legalReferenceValidator.ValidateLegalReferences(legalReferences);
+                //var truthTableResult = await _legalReferenceValidator.ValidateLegalReferences(legalReferences);
                 
                 caseList.ForEach(cs => cs.LastChecked = DateTime.Now);
                 
@@ -94,6 +94,7 @@ namespace summeringsmakker.Controllers
                     Summary = caseSummary.Summary,
                     MermaidCode = caseSummary.MermaidCode,
                     CaseSummaryWords = caseSummary.GetWords().Select(word => word.Text).ToList(),
+                    /*
                     CaseSummaryLegalReferences = caseSummary.GetLegalReferences()
                         .Select(legalReference =>
                         {
@@ -106,7 +107,22 @@ namespace summeringsmakker.Controllers
                                 return new LegalReferenceStatus { Text = legalReference.Text, IsInEffect = false, IsActual = "not found" };
                             }
                         }).ToList()
+                    */
+                    CaseSummaryLegalReferences = caseSummary.GetLegalReferences()
+                    .Select(lr => new LegalReferenceStatus { Text = lr.Text, IsActual = lr.IsActual, IsInEffect = lr.IsInEffect })
+                    .ToList()
                 };
+
+                var caseSummaryDtoList = caseList.Select(caseSummary => new CaseSummaryDTO
+                {
+                    CaseSummaryId = caseSummary.CaseSummaryId,
+                    Summary = caseSummary.Summary.Split('.').FirstOrDefault() + "." ?? string.Empty,
+                    MermaidCode = caseSummary.MermaidCode,
+                    CaseSummaryWords = caseSummary.GetWords().Select(word => word.Text).ToList(),
+                    CaseSummaryLegalReferences = caseSummary.GetLegalReferences()
+                    .Select(lr => new LegalReferenceStatus { Text = lr.Text, IsActual = lr.IsActual, IsInEffect = lr.IsInEffect })
+                    .ToList()
+                }).ToList();
 
                 _logger.LogInformation("CaseSummaryDTO List: {@caseSummaryDtoList}", caseSummaryDtoList);
 

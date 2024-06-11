@@ -28,7 +28,7 @@
     <ul>
         @foreach (var legalReference in Model.CaseSummaryLegalReferences)
         {
-            <li>@legalReference.Key - Found: @legalReference.Value.Found, Status: @legalReference.Value.Status</li>
+            <li>@legalReference.Text - Found: @legalReference.IsActual, Status: @legalReference.IsInEffect</li>
         }
     </ul>
 </div>
