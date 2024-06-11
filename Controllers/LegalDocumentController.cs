@@ -13,7 +13,7 @@ using System.IO;
 namespace summeringsmakker.Controllers;
 
 [Controller]
-public class CaseSummaryUpdateController(
+public class LegalDocumentController(
     ICaseSummaryRepository caseSummaryRepository,
     LegalReferenceValidator legalReferenceValidator)
     : Controller
@@ -42,7 +42,7 @@ public class CaseSummaryUpdateController(
     }
 
     [HttpPost]
-    public async Task<IActionResult> SaveLegalDoc()
+    public async Task<IActionResult> DownloadAndProcessLegalDocument()
     {
         var filePath = Path.Combine(_filePath, "legalDoc.pdf");
         var textFilePath = Path.Combine(_filePath, "legalDoc.txt");
