@@ -15,10 +15,8 @@ public class LegalReferenceValidatorFixture
 
     public LegalReferenceValidatorFixture()
     {
-        // Initialize the LegalReferenceValidator object
-        // Mock the necessary dependencies
         var options = new DbContextOptionsBuilder<SummeringsMakkerDbContext>()
-            .UseInMemoryDatabase(databaseName: "TestDatabase") // Create a new in-memory database for testing
+            .UseInMemoryDatabase(databaseName: "TestDatabase")
             .Options;
 
         var context = new SummeringsMakkerDbContext(options);
@@ -36,14 +34,11 @@ public class LegalReferenceValidatorTests(LegalReferenceValidatorFixture fixture
     [Fact]
     public async Task ValidateLegalReferences_ShouldReturnExpectedResults()
     {
-        Assert.True(true, "Test not implemented yet");
-
-
         // Arrange
         CaseSummary caseSummary = new CaseSummary
         {
             CaseSummaryId = 1,
-            CaseId = 1,
+            CaseId = 10,
             Summary = "Summary",
             MermaidCode = "MermaidCode",
             LastChecked = DateTime.Now,
@@ -57,43 +52,14 @@ public class LegalReferenceValidatorTests(LegalReferenceValidatorFixture fixture
         };
         caseSummary.CaseSummaryLegalReferences.Add(caseSummaryLegalReference);
         
-        var reference = DeepCopy(caseSummaryLegalReference);
-        
         // Act
-        var resultCaseSummary = await _validator.ValidateCaseSummaryLegalReferences(caseSummary);
-
+        var caseSummaryResult = await _validator.ValidateCaseSummaryLegalReferences(caseSummary);
+        
         // Assert
-        Assert.NotNull(resultCaseSummary);
-        for (int i = 0; i < resultCaseSummary.CaseSummaryLegalReferences.Count; i++)
-        {
-            CaseSummaryLegalReference cs = caseSummary.CaseSummaryLegalReferences[i];
-            CaseSummaryLegalReference csExpected = reference.CaseSummary.CaseSummaryLegalReferences[i];
-            Assert.Equal(csExpected.CaseSummaryId, cs.CaseSummaryId);
-        }
+        bool isValidExpected = true;
+        bool IsInEffectExpected = true;
+        
+        Assert.Equal(isValidExpected, caseSummaryResult.CaseSummaryLegalReferences[0].LegalReference.IsActual);
+        Assert.Equal(IsInEffectExpected, caseSummaryResult.CaseSummaryLegalReferences[0].LegalReference.IsInEffect);
     }
-    
-    // helper methods
-    public CaseSummaryLegalReference DeepCopy(CaseSummaryLegalReference original)
-    {
-        return new CaseSummaryLegalReference
-        {
-            CaseSummaryId = original.CaseSummaryId,
-            CaseSummary = new CaseSummary
-            {
-                CaseSummaryId = original.CaseSummary.CaseSummaryId,
-                CaseId = original.CaseSummary.CaseId,
-                Summary = original.CaseSummary.Summary,
-                MermaidCode = original.CaseSummary.MermaidCode,
-                LastChecked = original.CaseSummary.LastChecked,
-                // Copy other properties of CaseSummary if there are any
-            },
-            LegalReferenceId = original.LegalReferenceId,
-            LegalReference = new LegalReference
-            {
-                LegalReferenceId = original.LegalReference.LegalReferenceId,
-                // Copy other properties of LegalReference if there are any
-            }
-        };
-    }
-    
 }
