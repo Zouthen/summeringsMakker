@@ -25,7 +25,7 @@ public class LegalReferenceValidatorTests(LegalReferenceValidatorFixture fixture
     private LegalReferenceValidator _validator = fixture.Validator;
 
     [Fact]
-    public async Task ValidateLegalReferences_ShouldReturnExpectedResults()
+    public async Task ValidateLegalReferences()
     {
         var options = new DbContextOptionsBuilder<SummeringsMakkerDbContext>()
             .UseInMemoryDatabase(databaseName: "TestDatabase")
@@ -74,3 +74,25 @@ public class LegalReferenceValidatorTests(LegalReferenceValidatorFixture fixture
         Assert.Equal(IsInEffectExpected, caseSummaryResult.CaseSummaryLegalReferences[0].LegalReference.IsInEffect);
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
