@@ -30,7 +30,10 @@ public class CaseRepository : ICaseRepository
 
     public Case GetById(int id)
     {
-        var filePath = System.IO.Path.Combine(Path, $"{id}.txt");
+        string binPath = AppDomain.CurrentDomain.BaseDirectory;
+        string projectRootPath = Directory.GetParent(binPath).Parent.Parent.Parent.FullName;
+        string filePath = System.IO.Path.Combine(projectRootPath, Path, $"{id}.txt");
+
         if (!File.Exists(filePath))
         {
             return null;

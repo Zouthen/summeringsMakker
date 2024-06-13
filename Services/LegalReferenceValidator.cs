@@ -18,14 +18,18 @@ public class LegalReferenceValidator
     private readonly SummeringsMakkerDbContext _context;
     private OpenAIClient client;
     private readonly ICaseRepository _caseRepository;
+    private readonly string legalDocumentFilename;
 
-    public LegalReferenceValidator(SummeringsMakkerDbContext context,
-        ICaseRepository caseRepository)
+    public LegalReferenceValidator(SummeringsMakkerDbContext context, ICaseRepository caseRepository, string legalDocumentFilename = "legalDoc.txt")
     {
         _context = context;
         _caseRepository = caseRepository;
 
-        var GPT4V_KEY = Environment.GetEnvironmentVariable("AI_KEY");
+        string binPath = AppDomain.CurrentDomain.BaseDirectory;
+        string projectRootPath = Directory.GetParent(binPath).Parent.Parent.Parent.FullName;
+        this.legalDocumentFilename = Path.Combine(projectRootPath, "LegalDocuments", legalDocumentFilename);
+
+        var GPT4V_KEY = File.ReadAllText(Path.Combine(projectRootPath, "EnvVariables", "gpt4v_key")).Trim();
         httpClient = new HttpClient
         {
             Timeout = TimeSpan.FromMinutes(10) // timeout
@@ -35,19 +39,20 @@ public class LegalReferenceValidator
 
     private const string AiEndpoint =
         "https://azureopenaitestsyl.openai.azure.com/openai/deployments/TeamHovedopgave/chat/completions?api-version=2024-02-15-preview";
+
     private const double TEMPERATURE = 0.1;
     private const double TOP_P = 0.95;
     private const int MAX_TOKENS = 4096;
 
 
     public async Task<List<LegalReference>> ValidateLegalReferences(List<LegalReference> legalReferences,
-        int caseSummaryId, string legalDocumentFilename = "legalDoc.txt")
+        int caseSummaryId)
     {
         //  read from db
-        var caseContext = _caseRepository.GetById(caseSummaryId);
+        var caseContext = _caseRepository.GetById(caseSummaryId).Content;
 
         // Load legal document
-        string filePath = Path.Combine(Directory.GetCurrentDirectory(), "LegalDocuments", legalDocumentFilename);
+        string filePath = Path.Combine(GlobalPaths.ProjectRootPath, "LegalDocuments", legalDocumentFilename);
         string legalDocument = string.Empty;
 
         if (File.Exists(filePath))
@@ -66,7 +71,7 @@ public class LegalReferenceValidator
                     throw new Exception($"Unsupported file extension: {fileExtension}");
             }
         }
-        
+
         var formattedLegalReferencesList =
             string.Join("; ", legalReferences.Select((lr, index) => $"id:{index}, text:{lr.Text}")); // todo fix this
 
@@ -202,7 +207,7 @@ public class LegalReferenceValidator
         foreach (var line in csvLines)
         {
             if (line.ToLower().Contains("id")) continue;
-            
+
             var values = line.Trim(';').Split(',');
             if (values.Length != 3) continue;
             legalReferenceStatus.Add(

@@ -20,9 +20,11 @@ public class LegalReferenceValidatorFixture
             .Options;
 
         var context = new SummeringsMakkerDbContext(options);
-        var caseRepository = new Mock<CaseRepository>();
+        var caseRepository = new Mock<ICaseRepository>();
 
-        Validator = new LegalReferenceValidator(context, caseRepository.Object);
+        string legalDocumentFilename = Path.Combine(GlobalPaths.ProjectRootPath, "LegalDocuments", "legalDoc.txt");
+
+        Validator = new LegalReferenceValidator(context, caseRepository.Object, legalDocumentFilename);
     }
 }
 
@@ -38,7 +40,7 @@ public class LegalReferenceValidatorTests(LegalReferenceValidatorFixture fixture
         CaseSummary caseSummary = new CaseSummary
         {
             CaseSummaryId = 1,
-            CaseId = 10,
+            CaseId = 1,
             Summary = "Summary",
             MermaidCode = "MermaidCode",
             LastChecked = DateTime.Now,
@@ -48,7 +50,13 @@ public class LegalReferenceValidatorTests(LegalReferenceValidatorFixture fixture
             CaseSummaryId = 1,
             CaseSummary = caseSummary,
             LegalReferenceId = 1,
-            LegalReference = new LegalReference()
+            LegalReference = new LegalReference
+            {
+                LegalReferenceId = 1,
+                Text = "Artikel 1, litra f og k om definitioner af grænsegænger og bopæl",
+                IsActual = false,
+                IsInEffect = false
+            }
         };
         caseSummary.CaseSummaryLegalReferences.Add(caseSummaryLegalReference);
         
