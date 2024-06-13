@@ -15,16 +15,7 @@ public class LegalReferenceValidatorFixture
 
     public LegalReferenceValidatorFixture()
     {
-        var options = new DbContextOptionsBuilder<SummeringsMakkerDbContext>()
-            .UseInMemoryDatabase(databaseName: "TestDatabase")
-            .Options;
-
-        var context = new SummeringsMakkerDbContext(options);
-        var caseRepository = new Mock<ICaseRepository>();
-
-        string legalDocumentFilename = Path.Combine(GlobalPaths.ProjectRootPath, "LegalDocuments", "legalDoc.txt");
-
-        Validator = new LegalReferenceValidator(context, caseRepository.Object, legalDocumentFilename);
+        
     }
 }
 
@@ -36,6 +27,18 @@ public class LegalReferenceValidatorTests(LegalReferenceValidatorFixture fixture
     [Fact]
     public async Task ValidateLegalReferences_ShouldReturnExpectedResults()
     {
+        var options = new DbContextOptionsBuilder<SummeringsMakkerDbContext>()
+            .UseInMemoryDatabase(databaseName: "TestDatabase")
+            .Options;
+
+        var context = new SummeringsMakkerDbContext(options);
+        var caseRepository = new Mock<ICaseRepository>();
+
+        string legalDocumentFilename = Path.Combine(GlobalPaths.ProjectRootPath, "LegalDocuments", "legalDoc.txt");
+
+        var validator = new LegalReferenceValidator(context, caseRepository.Object, legalDocumentFilename);
+        
+        
         // Arrange
         CaseSummary caseSummary = new CaseSummary
         {
@@ -61,7 +64,7 @@ public class LegalReferenceValidatorTests(LegalReferenceValidatorFixture fixture
         caseSummary.CaseSummaryLegalReferences.Add(caseSummaryLegalReference);
         
         // Act
-        var caseSummaryResult = await _validator.ValidateCaseSummaryLegalReferences(caseSummary);
+        var caseSummaryResult = await validator.ValidateCaseSummaryLegalReferences(caseSummary);
         
         // Assert
         bool isValidExpected = true;

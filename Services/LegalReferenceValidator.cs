@@ -49,8 +49,10 @@ public class LegalReferenceValidator
         int caseSummaryId)
     {
         //  read from db
-        var caseContext = _caseRepository.GetById(caseSummaryId).Content;
-
+        var repository = new CaseRepository();
+        var readCase = repository.GetById(caseSummaryId);
+        string caseContext = readCase.Content;
+        
         // Load legal document
         string filePath = Path.Combine(GlobalPaths.ProjectRootPath, "LegalDocuments", legalDocumentFilename);
         string legalDocument = string.Empty;
