@@ -20,7 +20,7 @@ public class LegalReferenceValidator
     private readonly ICaseRepository _caseRepository;
 
     public LegalReferenceValidator(SummeringsMakkerDbContext context,
-        ICaseRepository caseRepository) // Modify this line
+        ICaseRepository caseRepository)
     {
         _context = context;
         _caseRepository = caseRepository;
@@ -33,27 +33,40 @@ public class LegalReferenceValidator
         httpClient.DefaultRequestHeaders.Add("api-key", GPT4V_KEY);
     }
 
-    private const string GPT4V_ENDPOINT =
+    private const string AiEndpoint =
         "https://azureopenaitestsyl.openai.azure.com/openai/deployments/TeamHovedopgave/chat/completions?api-version=2024-02-15-preview";
-
     private const double TEMPERATURE = 0.1;
     private const double TOP_P = 0.95;
     private const int MAX_TOKENS = 4096;
 
 
     public async Task<List<LegalReference>> ValidateLegalReferences(List<LegalReference> legalReferences,
-        int caseSummary)
+        int caseSummaryId, string legalDocumentFilename = "legalDoc.txt")
     {
         //  read from db
-        var caseContext = _caseRepository.GetById(caseSummary);
+        var caseContext = _caseRepository.GetById(caseSummaryId);
 
+        // Load legal document
+        string filePath = Path.Combine(Directory.GetCurrentDirectory(), "LegalDocuments", legalDocumentFilename);
+        string legalDocument = string.Empty;
 
-        // Load legal document text from file
-        string filePath = "legalDocumentShort.pdf";
-        string legalDocument = File.Exists(filePath) ? TextExtractor.ExtractTextFromPdf(filePath) : string.Empty;
+        if (File.Exists(filePath))
+        {
+            var fileExtension = Path.GetExtension(filePath).ToLower();
 
-        var results = new List<(int, bool, bool)>();
-
+            switch (fileExtension)
+            {
+                case ".pdf":
+                    legalDocument = TextExtractor.ExtractTextFromPdf(filePath);
+                    break;
+                case ".txt":
+                    legalDocument = await File.ReadAllTextAsync(filePath);
+                    break;
+                default:
+                    throw new Exception($"Unsupported file extension: {fileExtension}");
+            }
+        }
+        
         var formattedLegalReferencesList =
             string.Join("; ", legalReferences.Select((lr, index) => $"id:{index}, text:{lr.Text}")); // todo fix this
 
@@ -92,8 +105,7 @@ public class LegalReferenceValidator
         // Send request to AI and parse response
         try
         {
-            string response = "{\"choices\":[{\"content_filter_results\":{\"hate\":{\"filtered\":false,\"severity\":\"safe\"},\"self_harm\":{\"filtered\":false,\"severity\":\"safe\"},\"sexual\":{\"filtered\":false,\"severity\":\"safe\"},\"violence\":{\"filtered\":false,\"severity\":\"safe\"}},\"finish_reason\":\"stop\",\"index\":0,\"logprobs\":null,\"message\":{\"content\":\"id,IsActual,IsInEffect\\n0,true,true\\n1,true,true\\n2,true,true\\n3,true,true\\n4,false,false\\n5,false,false\\n6,false,false\",\"role\":\"assistant\"}}],\"created\":1717751702,\"id\":\"chatcmpl-9XPyYDbafHykMNSVZZ1F9vlUYBDlC\",\"model\":\"gpt-4-turbo-2024-04-09\",\"object\":\"chat.completion\",\"prompt_filter_results\":[{\"prompt_index\":0,\"content_filter_results\":{\"hate\":{\"filtered\":false,\"severity\":\"safe\"},\"self_harm\":{\"filtered\":false,\"severity\":\"safe\"},\"sexual\":{\"filtered\":false,\"severity\":\"safe\"},\"violence\":{\"filtered\":false,\"severity\":\"safe\"}}}],\"system_fingerprint\":\"fp_f5ce1e47b6\",\"usage\":{\"completion_tokens\":36,\"prompt_tokens\":576,\"total_tokens\":612}}\n";
-            // string response = await SendRequestToAi(JsonConvert.SerializeObject(payload), httpClient);
+            string response = await SendRequestToAi(JsonConvert.SerializeObject(payload), httpClient);
             JsonDocument json = JsonDocument.Parse(response);
             string? content = json.RootElement
                 .GetProperty("choices")
@@ -140,7 +152,7 @@ public class LegalReferenceValidator
         try
         {
             var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-            var response = await httpClient.PostAsync(GPT4V_ENDPOINT, content);
+            var response = await httpClient.PostAsync(AiEndpoint, content);
 
             // Get the HTTP status code
             HttpStatusCode statusCode = response.StatusCode;
