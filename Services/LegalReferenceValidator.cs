@@ -18,14 +18,18 @@ public class LegalReferenceValidator
     private readonly SummeringsMakkerDbContext _context;
     private OpenAIClient client;
     private readonly ICaseRepository _caseRepository;
+    private readonly string legalDocumentFilename;
 
-    public LegalReferenceValidator(SummeringsMakkerDbContext context,
-        ICaseRepository caseRepository) // Modify this line
+    public LegalReferenceValidator(SummeringsMakkerDbContext context, ICaseRepository caseRepository, string legalDocumentFilename = "legalDoc.txt")
     {
         _context = context;
         _caseRepository = caseRepository;
 
-        var GPT4V_KEY = File.ReadAllText("EnvVariables/gpt4v_key").Trim();
+        string binPath = AppDomain.CurrentDomain.BaseDirectory;
+        string projectRootPath = Directory.GetParent(binPath).Parent.Parent.Parent.FullName;
+        this.legalDocumentFilename = Path.Combine(projectRootPath, "LegalDocuments", legalDocumentFilename);
+
+        var GPT4V_KEY = File.ReadAllText(Path.Combine(projectRootPath, "EnvVariables", "gpt4v_key")).Trim();
         httpClient = new HttpClient
         {
             Timeout = TimeSpan.FromMinutes(10) // timeout
@@ -33,7 +37,7 @@ public class LegalReferenceValidator
         httpClient.DefaultRequestHeaders.Add("api-key", GPT4V_KEY);
     }
 
-    private const string GPT4V_ENDPOINT =
+    private const string AiEndpoint =
         "https://azureopenaitestsyl.openai.azure.com/openai/deployments/TeamHovedopgave/chat/completions?api-version=2024-02-15-preview";
 
     private const double TEMPERATURE = 0.1;
@@ -42,17 +46,33 @@ public class LegalReferenceValidator
 
 
     public async Task<List<LegalReference>> ValidateLegalReferences(List<LegalReference> legalReferences,
-        int caseSummary)
+        int caseSummaryId)
     {
         //  read from db
-        var caseContext = _caseRepository.GetById(caseSummary);
+        var repository = new CaseRepository();
+        var readCase = repository.GetById(caseSummaryId);
+        string caseContext = readCase.Content;
+        
+        // Load legal document
+        string filePath = Path.Combine(GlobalPaths.ProjectRootPath, "LegalDocuments", legalDocumentFilename);
+        string legalDocument = string.Empty;
 
+        if (File.Exists(filePath))
+        {
+            var fileExtension = Path.GetExtension(filePath).ToLower();
 
-        // Load legal document text from file
-        string filePath = "legalDocumentShort.pdf";
-        string legalDocument = File.Exists(filePath) ? TextExtractor.ExtractTextFromPdf(filePath) : string.Empty;
-
-        var results = new List<(int, bool, bool)>();
+            switch (fileExtension)
+            {
+                case ".pdf":
+                    legalDocument = TextExtractor.ExtractTextFromPdf(filePath);
+                    break;
+                case ".txt":
+                    legalDocument = await File.ReadAllTextAsync(filePath);
+                    break;
+                default:
+                    throw new Exception($"Unsupported file extension: {fileExtension}");
+            }
+        }
 
         var formattedLegalReferencesList =
             string.Join("; ", legalReferences.Select((lr, index) => $"id:{index}, text:{lr.Text}")); // todo fix this
@@ -66,7 +86,7 @@ public class LegalReferenceValidator
                 {
                     role = "system",
                     content =
-                        "Du er et nøjagtig juridisk validerings program der modtager en liste af juridiske henvisninger med id for hver, hvor du skal sammenligne disse juridiske henvisninger med et juridisk dokument og returnere en csv fil med svar på spørgsmål besvaret ved at sammenligne det juridisk dokument med hver juridisk henvisning."
+                        "Du er et nÃ¸jagtig juridisk validerings program der modtager en liste af juridiske henvisninger med id for hver, hvor du skal sammenligne disse juridiske henvisninger med et juridisk dokument og returnere en csv fil med svar pÃ¥ spÃ¸rgsmÃ¥l besvaret ved at sammenligne det juridisk dokument med hver juridisk henvisning."
                 },
                 new { role = "user", content = $"juridiske dokument:" + legalDocument },
                 new
@@ -74,11 +94,11 @@ public class LegalReferenceValidator
                     role = "user",
                     content =
                         $@"Listen af juridiske henvisninger: [{formattedLegalReferencesList}]
-                For hver henvisning udfør følgende:
-                - IsActual: Valider om den givne henvisning optræder i det juridiske dokument.
-                - IsInEffect: Valider om henvisningen er ophørt. Dette gøres primært ved at tjekke om ordet 'ophørt' indgår.
+                For hver henvisning udfÃ¸r fÃ¸lgende:
+                - IsActual: Valider om den givne henvisning optrÃ¦der i det juridiske dokument.
+                - IsInEffect: Valider om henvisningen er ophÃ¸rt. Dette gÃ¸res primÃ¦rt ved at tjekke om ordet 'ophÃ¸rt' indgÃ¥r.
                 
-                Svaret skal være en CSV-liste med 'id, IsActual, IsInEffect;' for hver henvisning, hvor IsInEffect og IsActual er angivet som 'true' eller 'false'.
+                Svaret skal vÃ¦re en CSV-liste med 'id, IsActual, IsInEffect;' for hver henvisning, hvor IsInEffect og IsActual er angivet som 'true' eller 'false'.
 
                 Dette er den konkrete juridiske sag der behandles: {caseContext}"
                 }
@@ -92,8 +112,7 @@ public class LegalReferenceValidator
         // Send request to AI and parse response
         try
         {
-            string response = "{\"choices\":[{\"content_filter_results\":{\"hate\":{\"filtered\":false,\"severity\":\"safe\"},\"self_harm\":{\"filtered\":false,\"severity\":\"safe\"},\"sexual\":{\"filtered\":false,\"severity\":\"safe\"},\"violence\":{\"filtered\":false,\"severity\":\"safe\"}},\"finish_reason\":\"stop\",\"index\":0,\"logprobs\":null,\"message\":{\"content\":\"id,IsActual,IsInEffect\\n0,true,true\\n1,true,true\\n2,true,true\\n3,true,true\\n4,false,false\\n5,false,false\\n6,false,false\",\"role\":\"assistant\"}}],\"created\":1717751702,\"id\":\"chatcmpl-9XPyYDbafHykMNSVZZ1F9vlUYBDlC\",\"model\":\"gpt-4-turbo-2024-04-09\",\"object\":\"chat.completion\",\"prompt_filter_results\":[{\"prompt_index\":0,\"content_filter_results\":{\"hate\":{\"filtered\":false,\"severity\":\"safe\"},\"self_harm\":{\"filtered\":false,\"severity\":\"safe\"},\"sexual\":{\"filtered\":false,\"severity\":\"safe\"},\"violence\":{\"filtered\":false,\"severity\":\"safe\"}}}],\"system_fingerprint\":\"fp_f5ce1e47b6\",\"usage\":{\"completion_tokens\":36,\"prompt_tokens\":576,\"total_tokens\":612}}\n";
-            // string response = await SendRequestToAi(JsonConvert.SerializeObject(payload), httpClient);
+            string response = await SendRequestToAi(JsonConvert.SerializeObject(payload), httpClient);
             JsonDocument json = JsonDocument.Parse(response);
             string? content = json.RootElement
                 .GetProperty("choices")
@@ -140,7 +159,7 @@ public class LegalReferenceValidator
         try
         {
             var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-            var response = await httpClient.PostAsync(GPT4V_ENDPOINT, content);
+            var response = await httpClient.PostAsync(AiEndpoint, content);
 
             // Get the HTTP status code
             HttpStatusCode statusCode = response.StatusCode;
@@ -190,7 +209,7 @@ public class LegalReferenceValidator
         foreach (var line in csvLines)
         {
             if (line.ToLower().Contains("id")) continue;
-            
+
             var values = line.Trim(';').Split(',');
             if (values.Length != 3) continue;
             legalReferenceStatus.Add(

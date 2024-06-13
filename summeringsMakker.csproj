@@ -48,8 +48,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="LegalDocuments\" />
     <Folder Include="Migrations\" />
+    <Folder Include="Tests\TestData\" />
   </ItemGroup>
 
 </Project>

@@ -8,24 +8,26 @@ using summeringsmakker.Models;
 using summeringsMakker.Repository;
 using summeringsMakker.Services;
 
-
 namespace summeringsmakker.Controllers
 {
     [ApiController]
     [Route("cron")]
-    public class CronCaseController : ControllerBase
+    public class CronCaseController : Controller
     {
         private readonly ICaseRepository _caseRepository;
         private readonly ICaseSummaryRepository _caseSummaryRepository;
         private readonly CaseProcessor _caseProcessor;
 
-        public CronCaseController(ICaseRepository caseRepository, ICaseSummaryRepository caseSummaryRepository, CaseProcessor caseProcessor)
+        public CronCaseController(
+            ICaseRepository caseRepository,
+            ICaseSummaryRepository caseSummaryRepository,
+            CaseProcessor caseProcessor)
         {
             _caseRepository = caseRepository;
             _caseSummaryRepository = caseSummaryRepository;
             _caseProcessor = caseProcessor;
         }
-        
+
         [HttpPost("create-case-summaries")]
         public async Task<IActionResult> CreateCaseSummaries()
         {
@@ -52,7 +54,6 @@ namespace summeringsmakker.Controllers
 
             foreach (var caseWithoutSummary in casesWithoutSummaries)
             {
-                
                 var caseSummary = await _caseProcessor.ProcessFile(caseWithoutSummary);
                 caseSummaries.Add(caseSummary);
             }
@@ -60,9 +61,14 @@ namespace summeringsmakker.Controllers
             // add to database
             _caseSummaryRepository.Add(caseSummaries);
 
+            var message = casesWithoutSummaries.Count > 0
+                ? $"{casesWithoutSummaries.Count} case(s) were added"
+                : "Already up to date";
+
+            // Pass the message to the view
+            TempData["Notification"] = message;
+
             return RedirectToAction("Index", "CaseSummary");
         }
-
-
     }
 }

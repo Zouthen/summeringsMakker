@@ -46,7 +46,14 @@
     </table>
     </div>
 </div>
-
+<script type="text/javascript">
+    window.onload = function () {
+        var message = '@TempData["Notification"]';
+        if (message) {
+            alert(message);
+        }
+    };
+</script>
 @section Scripts {
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
     <script src="https://cdn.datatables.net/1.10.15/js/jquery.dataTables.min.js"></script>
@@ -56,6 +63,9 @@
             var table = $('#caseGrid').DataTable({
                 "processing": true,
                 "serverSide": true,
+                "filter": true,
+                "orderMulti": false,
+                "pageLength": 10,
                 "ajax": {
                     "url": "/CaseSummary/LoadCases",
                     "type": "POST",

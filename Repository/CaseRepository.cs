@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using summeringsmakker.Models;
+using summeringsMakker.Services;
 
 namespace summeringsmakker.Repository;
 
@@ -30,7 +31,7 @@ public class CaseRepository : ICaseRepository
 
     public Case GetById(int id)
     {
-        var filePath = System.IO.Path.Combine(Path, $"{id}.txt");
+        string filePath = System.IO.Path.Combine(GlobalPaths.ProjectRootPath, Path, $"{id}.txt");
         if (!File.Exists(filePath))
         {
             return null;

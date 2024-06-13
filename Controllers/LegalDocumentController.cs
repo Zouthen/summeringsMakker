@@ -20,10 +20,8 @@ public class LegalDocumentController(
 {
     private readonly string _filePath = Path.Combine(Directory.GetCurrentDirectory(), "LegalDocuments");
     private readonly string _legalDocumentUrl = "https://www.retsinformation.dk/api/pdf/238690";
-
-
-    // POST: CaseSummaryUpdateController/UpdateLastChecked
-    [HttpPost]
+    
+    [HttpPut]
     public async Task<IActionResult> UpdateLastChecked(DateTime? date)
     {
         var dateToCheck = date ?? DateTime.Now;
@@ -31,11 +29,16 @@ public class LegalDocumentController(
         var caseSummaries = caseSummaryRepository.GetCaseSummaries()
             .Where(cs => cs.LastChecked < dateToCheck).ToList();
 
-        // Validate legal references
+        if (!caseSummaries.Any())
+        {
+            return BadRequest("No CaseSummaries to update.");
+        }
+
+        // Validate legal references - AI api calles used
         caseSummaries.ForEach(cs =>
             _ = legalReferenceValidator.ValidateCaseSummaryLegalReferences(cs));
 
-        // Update database
+        // local change
         caseSummaryRepository.Update(caseSummaries);
 
         return Ok();
@@ -71,7 +74,7 @@ public class LegalDocumentController(
             // Write the extracted text to legalDoc.txt
             await System.IO.File.WriteAllTextAsync(textFilePath, textBuilder.ToString());
             
-            return Ok("File saved successfully.");
+            return Ok("File downloaded and processed successfully.");
         }
         else
         {
