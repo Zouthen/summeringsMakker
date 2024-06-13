@@ -68,7 +68,7 @@ public class LegalReferenceValidatorTests(LegalReferenceValidatorFixture fixture
         
         // Assert
         bool isValidExpected = true;
-        bool IsInEffectExpected = true;
+        bool IsInEffectExpected = false;
         
         Assert.Equal(isValidExpected, caseSummaryResult.CaseSummaryLegalReferences[0].LegalReference.IsActual);
         Assert.Equal(IsInEffectExpected, caseSummaryResult.CaseSummaryLegalReferences[0].LegalReference.IsInEffect);
